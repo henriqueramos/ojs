@@ -23,6 +23,7 @@
 	<migration class="lib.pkp.classes.migration.FilesMigration" />
 	<migration class="lib.pkp.classes.migration.GenresMigration" />
 	<migration class="lib.pkp.classes.migration.JobsMigration" />
+	<migration class="lib.pkp.classes.migration.FailedJobsMigration" />
 	<migration class="lib.pkp.classes.migration.LibraryFilesMigration" />
 	<migration class="lib.pkp.classes.migration.LogMigration" />
 	<migration class="lib.pkp.classes.migration.MetadataMigration" />
