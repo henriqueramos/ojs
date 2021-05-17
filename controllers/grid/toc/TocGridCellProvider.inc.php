@@ -13,7 +13,11 @@
  * @brief Grid cell provider for the TOC (Table of Contents) category grid
  */
 
-import('lib.pkp.classes.controllers.grid.GridCellProvider');
+use PKP\controllers\grid\GridCellProvider;
+use PKP\linkAction\LinkAction;
+use PKP\linkAction\request\AjaxAction;
+use PKP\controllers\grid\GridHandler;
+use PKP\controllers\grid\GridColumn;
 
 class TocGridCellProvider extends GridCellProvider
 {
@@ -51,9 +55,8 @@ class TocGridCellProvider extends GridCellProvider
     /**
      * @copydoc GridCellProvider::getCellActions()
      */
-    public function getCellActions($request, $row, $column, $position = GRID_ACTION_POSITION_DEFAULT)
+    public function getCellActions($request, $row, $column, $position = GridHandler::GRID_ACTION_POSITION_DEFAULT)
     {
-        import('lib.pkp.classes.linkAction.request.AjaxAction');
         switch ($column->getId()) {
             case 'access':
                 $article = $row->getData(); /* @var $article Submission */

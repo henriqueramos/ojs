@@ -13,7 +13,9 @@
  * @brief Class that converts a Article to a PubMed XML document.
  */
 
-import('lib.pkp.classes.filter.PersistableFilter');
+use PKP\filter\PersistableFilter;
+
+use APP\workflow\EditorDecisionActionsManager;
 
 class ArticlePubMedXmlFilter extends PersistableFilter
 {
@@ -125,7 +127,7 @@ class ArticlePubMedXmlFilter extends PersistableFilter
             $editDecisions = (array) $editDecisionDao->getEditorDecisions($submission->getId());
             do {
                 $editorDecision = array_pop($editDecisions);
-            } while ($editorDecision && $editorDecision['decision'] != SUBMISSION_EDITOR_DECISION_ACCEPT);
+            } while ($editorDecision && $editorDecision['decision'] != EditorDecisionActionsManager::SUBMISSION_EDITOR_DECISION_ACCEPT);
 
             if ($editorDecision) {
                 $historyNode->appendChild($this->generatePubDateDom($doc, $editorDecision['dateDecided'], 'accepted'));

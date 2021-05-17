@@ -14,9 +14,14 @@
  *
  */
 
-use \PKP\submission\SubmissionFile;
+use PKP\submission\SubmissionFile;
+use PKP\submission\PKPSubmission;
+use PKP\security\authorization\ContextRequiredPolicy;
 
-import('classes.handler.Handler');
+use APP\security\authorization\OjsJournalMustPublishPolicy;
+use APP\template\TemplateManager;
+use APP\handler\Handler;
+use APP\payment\ojs\OJSPaymentManager;
 
 use Firebase\JWT\JWT;
 
@@ -77,10 +82,8 @@ class ArticleHandler extends Handler
             }
         }
 
-        import('lib.pkp.classes.security.authorization.ContextRequiredPolicy');
         $this->addPolicy(new ContextRequiredPolicy($request));
 
-        import('classes.security.authorization.OjsJournalMustPublishPolicy');
         $this->addPolicy(new OjsJournalMustPublishPolicy($request));
 
         return parent::authorize($request, $args, $roleAssignments);
@@ -111,7 +114,7 @@ class ArticleHandler extends Handler
         $context = $request->getContext();
         $user = $request->getUser();
 
-        if (!$submission || ($submission->getData('status') !== STATUS_PUBLISHED && !$issueAction->allowedPrePublicationAccess($context, $submission, $user))) {
+        if (!$submission || ($submission->getData('status') !== PKPSubmission::STATUS_PUBLISHED && !$issueAction->allowedPrePublicationAccess($context, $submission, $user))) {
             $request->getDispatcher()->handle404();
         }
 
@@ -143,7 +146,7 @@ class ArticleHandler extends Handler
             $galleyId = $subPath;
         }
 
-        if ($this->publication->getData('status') !== STATUS_PUBLISHED && !$issueAction->allowedPrePublicationAccess($context, $submission, $user)) {
+        if ($this->publication->getData('status') !== PKPSubmission::STATUS_PUBLISHED && !$issueAction->allowedPrePublicationAccess($context, $submission, $user)) {
             $request->getDispatcher()->handle404();
         }
 
@@ -431,7 +434,6 @@ class ArticleHandler extends Handler
 
             // If the file ID is not the galley's file ID, ensure it is a dependent file, or else 404.
             if ($this->fileId != $this->galley->getData('submissionFileId')) {
-                import('lib.pkp.classes.submission.SubmissionFile'); // Constants
                 $dependentFileIds = Services::get('submissionFile')->getIds([
                     'assocTypes' => [ASSOC_TYPE_SUBMISSION_FILE],
                     'assocIds' => [$this->galley->getFileId()],
@@ -488,7 +490,7 @@ class ArticleHandler extends Handler
         }
 
         // Make sure the reader has rights to view the article/issue.
-        if ($issue && $issue->getPublished() && $submission->getStatus() == STATUS_PUBLISHED) {
+        if ($issue && $issue->getPublished() && $submission->getStatus() == PKPSubmission::STATUS_PUBLISHED) {
             $subscriptionRequired = $issueAction->subscriptionRequired($issue, $context);
             $isSubscribedDomain = $issueAction->subscribedDomain($request, $context, $issue->getId(), $submission->getId());
 
@@ -504,7 +506,6 @@ class ArticleHandler extends Handler
                 // Subscription Access
                 $subscribedUser = $issueAction->subscribedUser($user, $context, $issue->getId(), $submission->getId());
 
-                import('classes.payment.ojs.OJSPaymentManager');
                 $paymentManager = Application::get()->getPaymentManager($context);
 
                 $purchasedIssue = false;
@@ -539,7 +540,7 @@ class ArticleHandler extends Handler
                             $this->article = $submission;
                             return true;
                         } elseif ($paymentManager->purchaseArticleEnabled()) {
-                            $queuedPayment = $paymentManager->createQueuedPayment($request, PAYMENT_TYPE_PURCHASE_ARTICLE, $user->getId(), $submission->getId(), $context->getData('purchaseArticleFee'));
+                            $queuedPayment = $paymentManager->createQueuedPayment($request, OJSPaymentManager::PAYMENT_TYPE_PURCHASE_ARTICLE, $user->getId(), $submission->getId(), $context->getData('purchaseArticleFee'));
                             $paymentManager->queuePayment($queuedPayment);
 
                             $paymentForm = $paymentManager->getPaymentForm($queuedPayment);

@@ -15,6 +15,10 @@
 
 import('classes.subscription.form.SubscriptionForm');
 
+use PKP\notification\PKPNotification;
+
+use APP\notification\NotificationManager;
+
 class InstitutionalSubscriptionForm extends SubscriptionForm
 {
     /**
@@ -53,16 +57,16 @@ class InstitutionalSubscriptionForm extends SubscriptionForm
         }
 
         // Ensure subscription type is valid
-        $this->addCheck(new FormValidatorCustom($this, 'typeId', 'required', 'manager.subscriptions.form.typeIdValid', function ($typeId) use ($journalId) {
+        $this->addCheck(new \PKP\form\validation\FormValidatorCustom($this, 'typeId', 'required', 'manager.subscriptions.form.typeIdValid', function ($typeId) use ($journalId) {
             $subscriptionTypeDao = DAORegistry::getDAO('SubscriptionTypeDAO'); /* @var $subscriptionTypeDao SubscriptionTypeDAO */
             return $subscriptionTypeDao->subscriptionTypeExistsByTypeId($typeId, $journalId) && $subscriptionTypeDao->getSubscriptionTypeInstitutional($typeId);
         }));
 
         // Ensure institution name is provided
-        $this->addCheck(new FormValidator($this, 'institutionName', 'required', 'manager.subscriptions.form.institutionNameRequired'));
+        $this->addCheck(new \PKP\form\validation\FormValidator($this, 'institutionName', 'required', 'manager.subscriptions.form.institutionNameRequired'));
 
         // If provided, domain is valid
-        $this->addCheck(new FormValidatorRegExp($this, 'domain', 'optional', 'manager.subscriptions.form.domainValid', '/^' .
+        $this->addCheck(new \PKP\form\validation\FormValidatorRegExp($this, 'domain', 'optional', 'manager.subscriptions.form.domainValid', '/^' .
                 '[A-Z0-9]+([\-_\.][A-Z0-9]+)*' .
                 '\.' .
                 '[A-Z]{2,4}' .
@@ -107,14 +111,14 @@ class InstitutionalSubscriptionForm extends SubscriptionForm
 
         // If online or print + online, domain or at least one IP range has been provided
         if ($subscriptionType->getFormat() != SUBSCRIPTION_TYPE_FORMAT_PRINT) {
-            $this->addCheck(new FormValidatorCustom($this, 'domain', 'optional', 'manager.subscriptions.form.domainIPRangeRequired', function ($domain) use ($ipRangeProvided) {
+            $this->addCheck(new \PKP\form\validation\FormValidatorCustom($this, 'domain', 'optional', 'manager.subscriptions.form.domainIPRangeRequired', function ($domain) use ($ipRangeProvided) {
                 return ($domain != '' || $ipRangeProvided) ? true : false;
             }));
         }
 
         // If provided ensure IP ranges have IP address format; IP addresses may contain wildcards
         if ($ipRangeProvided) {
-            $this->addCheck(new FormValidatorCustom($this, 'ipRanges', 'required', 'manager.subscriptions.form.ipRangeValid', function ($ipRanges) {
+            $this->addCheck(new \PKP\form\validation\FormValidatorCustom($this, 'ipRanges', 'required', 'manager.subscriptions.form.ipRangeValid', function ($ipRanges) {
                 foreach (explode("\r\n", trim($ipRanges)) as $ipRange) {
                     if (!PKPString::regexp_match(
                         '/^' .
@@ -165,10 +169,9 @@ class InstitutionalSubscriptionForm extends SubscriptionForm
         if ($this->_data['notifyEmail'] == 1) {
             $mail = $this->_prepareNotificationEmail('SUBSCRIPTION_NOTIFY');
             if (!$mail->send()) {
-                import('classes.notification.NotificationManager');
                 $notificationMgr = new NotificationManager();
                 $request = Application::get()->getRequest();
-                $notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, ['contents' => __('email.compose.error')]);
+                $notificationMgr->createTrivialNotification($request->getUser()->getId(), PKPNotification::NOTIFICATION_TYPE_ERROR, ['contents' => __('email.compose.error')]);
             }
         }
     }

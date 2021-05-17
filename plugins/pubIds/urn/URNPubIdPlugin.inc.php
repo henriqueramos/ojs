@@ -13,8 +13,18 @@
  * @brief URN plugin class
  */
 
+use PKP\services\interfaces\EntityWriteInterface;
+use PKP\linkAction\request\RemoteActionConfirmationModal;
+use PKP\linkAction\LinkAction;
 
-import('classes.plugins.PubIdPlugin');
+use APP\plugins\PubIdPlugin;
+use APP\template\TemplateManager;
+use APP\publication\Publication;
+
+// FIXME: Use namespacing
+//use \Issue;
+//use \IssueGalley;
+//use \ArticleGalley;
 
 class URNPubIdPlugin extends PubIdPlugin
 {
@@ -196,10 +206,10 @@ class URNPubIdPlugin extends PubIdPlugin
     public function getLinkActions($pubObject)
     {
         $linkActions = [];
-        import('lib.pkp.classes.linkAction.request.RemoteActionConfirmationModal');
         $request = Application::get()->getRequest();
         $userVars = $request->getUserVars();
-        $userVars['pubIdPlugIn'] = get_class($this);
+        $classNameParts = explode('\\', get_class($this)); // Separate namespace info from class name
+        $userVars['pubIdPlugIn'] = end($classNameParts);
         // Clear object pub id
         $linkActions['clearPubIdLinkActionURN'] = new LinkAction(
             'clearPubId',
@@ -215,7 +225,7 @@ class URNPubIdPlugin extends PubIdPlugin
             __('plugins.pubIds.urn.editor.clearObjectsURN')
         );
 
-        if (is_a($pubObject, 'Issue')) {
+        if ($pubObject instanceof Issue) {
             // Clear issue objects pub ids
             $linkActions['clearIssueObjectsPubIdsLinkActionURN'] = new LinkAction(
                 'clearObjectsPubIds',
@@ -311,12 +321,12 @@ class URNPubIdPlugin extends PubIdPlugin
         $props = $args[2];
 
         // URNs are not supported for IssueGalleys
-        if (get_class($object) === 'IssueGalley') {
+        if ($object instanceof IssueGalley) {
             return;
         }
 
         // URNs are already added to property values for Publications and Galleys
-        if (get_class($object) === 'Publication' || get_class($object) === 'ArticleGalley') {
+        if ($object instanceof Publication || $object instanceof ArticleGalley) {
             return;
         }
 
@@ -342,7 +352,7 @@ class URNPubIdPlugin extends PubIdPlugin
             return;
         }
 
-        if ($action === VALIDATE_ACTION_ADD) {
+        if ($action === EntityWriteInterface::VALIDATE_ACTION_ADD) {
             $submission = Services::get('submission')->get($props['submissionId']);
         } else {
             $publication = Services::get('publication')->get($props['id']);
@@ -527,7 +537,7 @@ class URNPubIdPlugin extends PubIdPlugin
             Application::get()->getRequest()->getBaseUrl() . '/' . $this->getPluginPath() . '/js/FieldUrn.js',
             [
                 'contexts' => 'backend',
-                'priority' => STYLE_SEQUENCE_LAST,
+                'priority' => TemplateManager::STYLE_SEQUENCE_LAST,
             ]
         );
 
@@ -546,7 +556,7 @@ class URNPubIdPlugin extends PubIdPlugin
             [
                 'contexts' => 'backend',
                 'inline' => true,
-                'priority' => STYLE_SEQUENCE_LAST,
+                'priority' => TemplateManager::STYLE_SEQUENCE_LAST,
             ]
         );
     }

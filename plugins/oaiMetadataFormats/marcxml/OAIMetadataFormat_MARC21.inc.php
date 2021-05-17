@@ -15,6 +15,10 @@
  * @brief OAI metadata format class -- MARC21 (MARCXML).
  */
 
+use PKP\oai\OAIMetadataFormat;
+
+use APP\template\TemplateManager;
+
 class OAIMetadataFormat_MARC21 extends OAIMetadataFormat
 {
     /**

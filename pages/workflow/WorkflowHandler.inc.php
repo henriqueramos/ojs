@@ -15,8 +15,10 @@
 
 import('lib.pkp.pages.workflow.PKPWorkflowHandler');
 
-// Access decision actions constants.
-import('classes.workflow.EditorDecisionActionsManager');
+use PKP\notification\PKPNotification;
+
+use APP\template\TemplateManager;
+use APP\file\PublicFileManager;
 
 class WorkflowHandler extends PKPWorkflowHandler
 {
@@ -70,7 +72,6 @@ class WorkflowHandler extends PKPWorkflowHandler
         $temporaryFileApiUrl = $request->getDispatcher()->url($request, PKPApplication::ROUTE_API, $submissionContext->getPath(), 'temporaryFiles');
         $issueApiUrl = $request->getDispatcher()->url($request, PKPApplication::ROUTE_API, $submissionContext->getData('urlPath'), 'issues/__issueId__');
 
-        import('classes.file.PublicFileManager');
         $publicFileManager = new PublicFileManager();
         $baseUrl = $request->getBaseUrl() . '/' . $publicFileManager->getContextFilesPath($submissionContext->getId());
 
@@ -86,9 +87,9 @@ class WorkflowHandler extends PKPWorkflowHandler
         import('classes.components.forms.publication.AssignToIssueForm');
         import('classes.components.forms.publication.PublishForm');
         $templateMgr->setConstants([
-            'FORM_ASSIGN_TO_ISSUE',
-            'FORM_ISSUE_ENTRY',
-            'FORM_PUBLISH',
+            'FORM_ASSIGN_TO_ISSUE' => FORM_ASSIGN_TO_ISSUE,
+            'FORM_ISSUE_ENTRY' => FORM_ISSUE_ENTRY,
+            'FORM_PUBLISH' => FORM_PUBLISH,
         ]);
 
         $components = $templateMgr->getState('components');
@@ -106,7 +107,9 @@ class WorkflowHandler extends PKPWorkflowHandler
                 $request->getContext()
             );
             $components[FORM_SUBMISSION_PAYMENTS] = $submissionPaymentsForm->getConfig();
-            $templateMgr->setConstants([FORM_SUBMISSION_PAYMENTS]);
+            $templateMgr->setConstants([
+                'FORM_SUBMISSION_PAYMENTS' => FORM_SUBMISSION_PAYMENTS,
+            ]);
         }
 
         // Add the word limit to the existing title/abstract form
@@ -162,13 +165,13 @@ class WorkflowHandler extends PKPWorkflowHandler
     {
         switch ($stageId) {
             case WORKFLOW_STAGE_ID_SUBMISSION:
-                return NOTIFICATION_TYPE_EDITOR_ASSIGNMENT_SUBMISSION;
+                return PKPNotification::NOTIFICATION_TYPE_EDITOR_ASSIGNMENT_SUBMISSION;
             case WORKFLOW_STAGE_ID_EXTERNAL_REVIEW:
-                return NOTIFICATION_TYPE_EDITOR_ASSIGNMENT_EXTERNAL_REVIEW;
+                return PKPNotification::NOTIFICATION_TYPE_EDITOR_ASSIGNMENT_EXTERNAL_REVIEW;
             case WORKFLOW_STAGE_ID_EDITING:
-                return NOTIFICATION_TYPE_EDITOR_ASSIGNMENT_EDITING;
+                return PKPNotification::NOTIFICATION_TYPE_EDITOR_ASSIGNMENT_EDITING;
             case WORKFLOW_STAGE_ID_PRODUCTION:
-                return NOTIFICATION_TYPE_EDITOR_ASSIGNMENT_PRODUCTION;
+                return PKPNotification::NOTIFICATION_TYPE_EDITOR_ASSIGNMENT_PRODUCTION;
         }
         return null;
     }

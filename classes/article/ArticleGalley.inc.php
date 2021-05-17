@@ -15,7 +15,7 @@
  * @brief A galley is a final presentation version of the full-text of an article.
  */
 
-import('lib.pkp.classes.submission.Representation');
+use PKP\submission\Representation;
 
 class ArticleGalley extends Representation
 {
@@ -59,7 +59,7 @@ class ArticleGalley extends Representation
      */
     public function setLabel($label)
     {
-        return $this->setData('label', $label);
+        $this->setData('label', $label);
     }
 
     /**
@@ -79,7 +79,7 @@ class ArticleGalley extends Representation
      */
     public function setLocale($locale)
     {
-        return $this->setData('locale', $locale);
+        $this->setData('locale', $locale);
     }
 
     /**

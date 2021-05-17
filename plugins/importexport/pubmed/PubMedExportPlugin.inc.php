@@ -15,6 +15,10 @@
 
 import('lib.pkp.classes.plugins.ImportExportPlugin');
 
+use PKP\file\FileManager;
+
+use APP\template\TemplateManager;
+
 class PubMedExportPlugin extends ImportExportPlugin
 {
     /**
@@ -104,7 +108,6 @@ class PubMedExportPlugin extends ImportExportPlugin
                     $request->getContext(),
                     $request->getUser()
                 );
-                import('lib.pkp.classes.file.FileManager');
                 $fileManager = new FileManager();
                 $exportFileName = $this->getExportFileName($this->getExportPath(), 'articles', $context, '.xml');
                 $fileManager->writeFile($exportFileName, $exportXml);
@@ -117,7 +120,6 @@ class PubMedExportPlugin extends ImportExportPlugin
                     $request->getContext(),
                     $request->getUser()
                 );
-                import('lib.pkp.classes.file.FileManager');
                 $fileManager = new FileManager();
                 $exportFileName = $this->getExportFileName($this->getExportPath(), 'issues', $context, '.xml');
                 $fileManager->writeFile($exportFileName, $exportXml);
@@ -258,29 +260,5 @@ class PubMedExportPlugin extends ImportExportPlugin
             'scriptName' => $scriptName,
             'pluginName' => $this->getName()
         ]) . "\n";
-    }
-
-    /**
-     * @see ImportExportPlugin::getImportFilter
-     */
-    public function getImportFilter($xmlFile)
-    {
-        throw new BadMethodCallException();
-    }
-
-    /**
-     * @see ImportExportPlugin::getExportFilter
-     */
-    public function getExportFilter($exportType)
-    {
-        throw new BadMethodCallException();
-    }
-
-    /**
-     * @see ImportExportPlugin::getAppSpecificDeployment
-     */
-    public function getAppSpecificDeployment($context, $user)
-    {
-        throw new BadMethodCallException();
     }
 }

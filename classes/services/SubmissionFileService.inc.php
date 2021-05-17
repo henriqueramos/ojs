@@ -13,15 +13,15 @@
  *  requirements.
  */
 
-namespace APP\Services;
+namespace APP\services;
 
-use \PKP\db\DAORegistry;
-use \PKP\search\SubmissionSearch;
-use \PKP\plugins\HookRegistry;
+use PKP\db\DAORegistry;
+use PKP\search\SubmissionSearch;
+use PKP\plugins\HookRegistry;
 
-use \APP\core\Application;
+use APP\core\Application;
 
-class SubmissionFileService extends \PKP\Services\PKPSubmissionFileService
+class SubmissionFileService extends \PKP\services\PKPSubmissionFileService
 {
     /**
      * Initialize hooks for extending PKPSubmissionService

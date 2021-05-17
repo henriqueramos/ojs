@@ -13,11 +13,15 @@
  *  requirements.
  */
 
-namespace APP\Services;
+namespace APP\services;
 
-class ContextService extends \PKP\Services\PKPContextService
+use PKP\file\TemporaryFileManager;
+
+use APP\file\PublicFileManager;
+
+class ContextService extends \PKP\services\PKPContextService
 {
-    /** @copydoc \PKP\Services\PKPContextService::$contextsFileDirName */
+    /** @copydoc \PKP\services\PKPContextService::$contextsFileDirName */
     public $contextsFileDirName = 'journals';
 
     /**
@@ -170,7 +174,6 @@ class ContextService extends \PKP\Services\PKPContextService
         $submissionDao = \DAORegistry::getDAO('SubmissionDAO');
         $submissionDao->deleteByContextId($context->getId());
 
-        import('classes.file.PublicFileManager');
         $publicFileManager = new \PublicFileManager();
         $publicFileManager->rmtree($publicFileManager->getContextFilesPath($context->getId()));
     }
@@ -198,7 +201,6 @@ class ContextService extends \PKP\Services\PKPContextService
         // and the current user owns it
         $user = \Application::get()->getRequest()->getUser();
         $userId = $user ? $user->getId() : null;
-        import('lib.pkp.classes.file.TemporaryFileManager');
         $temporaryFileManager = new \TemporaryFileManager();
         if (isset($props['journalThumbnail']) && empty($errors['journalThumbnail'])) {
             foreach ($allowedLocales as $localeKey) {

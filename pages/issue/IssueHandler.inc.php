@@ -14,7 +14,16 @@
  */
 
 import('classes.issue.IssueAction');
-import('classes.handler.Handler');
+
+use PKP\submission\PKPSubmission;
+use PKP\security\authorization\ContextRequiredPolicy;
+
+use APP\security\authorization\OjsJournalMustPublishPolicy;
+use APP\security\authorization\OjsIssueRequiredPolicy;
+use APP\handler\Handler;
+use APP\template\TemplateManager;
+use APP\file\IssueFileManager;
+use APP\payment\ojs\OJSPaymentManager;
 
 class IssueHandler extends Handler
 {
@@ -27,13 +36,9 @@ class IssueHandler extends Handler
      */
     public function authorize($request, &$args, $roleAssignments)
     {
-        import('lib.pkp.classes.security.authorization.ContextRequiredPolicy');
         $this->addPolicy(new ContextRequiredPolicy($request));
-
-        import('classes.security.authorization.OjsJournalMustPublishPolicy');
         $this->addPolicy(new OjsJournalMustPublishPolicy($request));
 
-        import('classes.security.authorization.OjsIssueRequiredPolicy');
         // the 'archives' op does not need this policy so it is left out of the operations array.
         $this->addPolicy(new OjsIssueRequiredPolicy($request, $args, ['view', 'download']));
 
@@ -178,7 +183,6 @@ class IssueHandler extends Handler
             $galley = $this->getGalley();
 
             if (!HookRegistry::call('IssueHandler::download', [&$issue, &$galley])) {
-                import('classes.file.IssueFileManager');
                 $issueFileManager = new IssueFileManager($issue->getId());
                 return $issueFileManager->downloadById($galley->getFileId(), $request->getUserVar('inline') ? true : false);
             }
@@ -264,7 +268,7 @@ class IssueHandler extends Handler
                             return true;
                         } else {
                             // Otherwise queue an issue purchase payment and display payment form
-                            $queuedPayment = $paymentManager->createQueuedPayment($request, PAYMENT_TYPE_PURCHASE_ISSUE, $userId, $issue->getId(), $journal->getData('purchaseIssueFee'));
+                            $queuedPayment = $paymentManager->createQueuedPayment($request, OJSPaymentManager::PAYMENT_TYPE_PURCHASE_ISSUE, $userId, $issue->getId(), $journal->getData('purchaseIssueFee'));
                             $paymentManager->queuePayment($queuedPayment);
 
                             $paymentForm = $paymentManager->getPaymentForm($queuedPayment);
@@ -331,10 +335,9 @@ class IssueHandler extends Handler
         }, $primaryGenres);
 
         // Show scheduled submissions if this is a preview
-        import('classes.submission.Submission'); // import STATUS_ constants
-        $allowedStatuses = [STATUS_PUBLISHED];
+        $allowedStatuses = [PKPSubmission::STATUS_PUBLISHED];
         if (!$issue->getPublished()) {
-            $allowedStatuses[] = STATUS_SCHEDULED;
+            $allowedStatuses[] = PKPSubmission::STATUS_SCHEDULED;
         }
 
         $issueSubmissions = iterator_to_array(Services::get('submission')->getMany([
@@ -405,7 +408,6 @@ class IssueHandler extends Handler
                 ($user && $completedPaymentDao->hasPaidPurchaseIssue($user->getId(), $issue->getId()))
         ]);
 
-        import('classes.payment.ojs.OJSPaymentManager');
         $paymentManager = Application::getPaymentManager($journal);
         if ($paymentManager->onlyPdfEnabled()) {
             $templateMgr->assign('restrictOnlyPdf', true);

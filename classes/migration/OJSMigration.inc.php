@@ -11,6 +11,8 @@
  * @brief Describe database table structures.
  */
 
+namespace APP\migration;
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -191,7 +193,7 @@ class OJSMigration extends Migration
             $table->bigInteger('section_id')->nullable();
             $table->float('seq', 8, 2)->default(0);
             $table->bigInteger('submission_id');
-            $table->smallInteger('status')->default(1); // STATUS_QUEUED
+            $table->smallInteger('status')->default(1); // PKPSubmission::STATUS_QUEUED
             $table->string('url_path', 64)->nullable();
             $table->bigInteger('version')->nullable();
             $table->index(['submission_id'], 'publications_submission_id');
@@ -344,4 +346,8 @@ class OJSMigration extends Migration
         Schema::drop('journal_settings');
         Schema::drop('journals');
     }
+}
+
+if (!PKP_STRICT_MODE) {
+    class_alias('\APP\migration\OJSMigration', '\OJSMigration');
 }

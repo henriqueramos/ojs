@@ -13,7 +13,10 @@
  * @brief Form class for user purchase of institutional subscription.
  */
 
-import('lib.pkp.classes.form.Form');
+use PKP\form\Form;
+
+use APP\template\TemplateManager;
+use APP\payment\ojs\OJSPaymentManager;
 
 class UserInstitutionalSubscriptionForm extends Form
 {
@@ -61,23 +64,23 @@ class UserInstitutionalSubscriptionForm extends Form
         $this->subscriptionTypes = $subscriptionTypes->toArray();
 
         // Ensure subscription type is valid
-        $this->addCheck(new FormValidatorCustom($this, 'typeId', 'required', 'user.subscriptions.form.typeIdValid', function ($typeId) use ($journalId) {
+        $this->addCheck(new \PKP\form\validation\FormValidatorCustom($this, 'typeId', 'required', 'user.subscriptions.form.typeIdValid', function ($typeId) use ($journalId) {
             $subscriptionTypeDao = DAORegistry::getDAO('SubscriptionTypeDAO'); /* @var $subscriptionTypeDao SubscriptionTypeDAO */
             return $subscriptionTypeDao->subscriptionTypeExistsByTypeId($typeId, $journalId) && $subscriptionTypeDao->getSubscriptionTypeInstitutional($typeId) && !$subscriptionTypeDao->getSubscriptionTypeDisablePublicDisplay($typeId);
         }));
 
         // Ensure institution name is provided
-        $this->addCheck(new FormValidator($this, 'institutionName', 'required', 'user.subscriptions.form.institutionNameRequired'));
+        $this->addCheck(new \PKP\form\validation\FormValidator($this, 'institutionName', 'required', 'user.subscriptions.form.institutionNameRequired'));
 
         // If provided, domain is valid
-        $this->addCheck(new FormValidatorRegExp($this, 'domain', 'optional', 'user.subscriptions.form.domainValid', '/^' .
+        $this->addCheck(new \PKP\form\validation\FormValidatorRegExp($this, 'domain', 'optional', 'user.subscriptions.form.domainValid', '/^' .
                 '[A-Z0-9]+([\-_\.][A-Z0-9]+)*' .
                 '\.' .
                 '[A-Z]{2,4}' .
             '$/i'));
 
-        $this->addCheck(new FormValidatorPost($this));
-        $this->addCheck(new FormValidatorCSRF($this));
+        $this->addCheck(new \PKP\form\validation\FormValidatorPost($this));
+        $this->addCheck(new \PKP\form\validation\FormValidatorCSRF($this));
     }
 
     /**
@@ -127,7 +130,7 @@ class UserInstitutionalSubscriptionForm extends Form
         $needMembership = $subscriptionTypeDao->getSubscriptionTypeMembership($this->getData('typeId'));
 
         if ($needMembership) {
-            $this->addCheck(new FormValidator($this, 'membership', 'required', 'user.subscriptions.form.membershipRequired'));
+            $this->addCheck(new \PKP\form\validation\FormValidator($this, 'membership', 'required', 'user.subscriptions.form.membershipRequired'));
         }
 
         // Check if IP range has been provided
@@ -141,7 +144,7 @@ class UserInstitutionalSubscriptionForm extends Form
         }
 
         // Domain or at least one IP range has been provided
-        $this->addCheck(new FormValidatorCustom($this, 'domain', 'required', 'user.subscriptions.form.domainIPRangeRequired', function ($domain) use ($ipRangeProvided) {
+        $this->addCheck(new \PKP\form\validation\FormValidatorCustom($this, 'domain', 'required', 'user.subscriptions.form.domainIPRangeRequired', function ($domain) use ($ipRangeProvided) {
             return ($domain != '' || $ipRangeProvided) ? true : false;
         }));
 
@@ -149,7 +152,7 @@ class UserInstitutionalSubscriptionForm extends Form
         if ($ipRangeProvided) {
             import('classes.subscription.InstitutionalSubscription');
 
-            $this->addCheck(new FormValidatorCustom($this, 'ipRanges', 'required', 'manager.subscriptions.form.ipRangeValid', function ($ipRanges) {
+            $this->addCheck(new \PKP\form\validation\FormValidatorCustom($this, 'ipRanges', 'required', 'manager.subscriptions.form.ipRangeValid', function ($ipRanges) {
                 foreach (PKPString::regexp_split('/\s+/', trim($ipRanges)) as $ipRange) {
                     if (!PKPString::regexp_match(
                         '/^' .
@@ -215,7 +218,7 @@ class UserInstitutionalSubscriptionForm extends Form
             $institutionalSubscriptionDao->insertObject($subscription);
         }
 
-        $queuedPayment = $paymentManager->createQueuedPayment($this->request, PAYMENT_TYPE_PURCHASE_SUBSCRIPTION, $this->userId, $subscription->getId(), $subscriptionType->getCost(), $subscriptionType->getCurrencyCodeAlpha());
+        $queuedPayment = $paymentManager->createQueuedPayment($this->request, OJSPaymentManager::PAYMENT_TYPE_PURCHASE_SUBSCRIPTION, $this->userId, $subscription->getId(), $subscriptionType->getCost(), $subscriptionType->getCurrencyCodeAlpha());
         $paymentManager->queuePayment($queuedPayment);
 
         $paymentForm = $paymentManager->getPaymentForm($queuedPayment);

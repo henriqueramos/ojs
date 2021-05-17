@@ -13,7 +13,8 @@
  * @brief Form to notify a user regarding a file
  */
 
-import('classes.mail.ArticleMailTemplate');
+use APP\mail\ArticleMailTemplate;
+
 import('lib.pkp.controllers.grid.users.stageParticipant.form.PKPStageParticipantNotifyForm');
 
 class StageParticipantNotifyForm extends PKPStageParticipantNotifyForm
@@ -57,7 +58,7 @@ class StageParticipantNotifyForm extends PKPStageParticipantNotifyForm
         if ($includeSignature) {
             return new ArticleMailTemplate($submission, $templateKey);
         } else {
-            return new ArticleMailTemplate($submission, $templateKey, null, null, null, false);
+            return new ArticleMailTemplate($submission, $templateKey, null, null, false);
         }
     }
 }

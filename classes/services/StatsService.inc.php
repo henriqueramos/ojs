@@ -13,9 +13,9 @@
  * @brief Helper class that encapsulates statistics business logic
  */
 
-namespace APP\Services;
+namespace APP\services;
 
-class StatsService extends \PKP\Services\PKPStatsService
+class StatsService extends \PKP\services\PKPStatsService
 {
     /**
      * Apply the sectionIds query param to the QueryBuilder

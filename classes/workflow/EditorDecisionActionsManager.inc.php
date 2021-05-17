@@ -13,25 +13,31 @@
  * @brief Wrapper class for create and assign editor decisions actions to template manager.
  */
 
-// Submission stage decision actions.
-define('SUBMISSION_EDITOR_DECISION_EXTERNAL_REVIEW', 8);
+namespace APP\workflow;
 
-// Submission and review stages decision actions.
-define('SUBMISSION_EDITOR_DECISION_ACCEPT', 1);
-define('SUBMISSION_EDITOR_DECISION_DECLINE', 4);
+use PKP\workflow\PKPEditorDecisionActionsManager;
+use PKP\submission\PKPSubmission;
+use PKP\db\DAORegistry;
 
-// Review stage decisions actions.
-define('SUBMISSION_EDITOR_DECISION_PENDING_REVISIONS', 2);
-define('SUBMISSION_EDITOR_DECISION_RESUBMIT', 3);
-define('SUBMISSION_EDITOR_DECISION_NEW_ROUND', 16);
-
-// Editorial stage decision actions.
-define('SUBMISSION_EDITOR_DECISION_SEND_TO_PRODUCTION', 7);
-
-import('lib.pkp.classes.workflow.PKPEditorDecisionActionsManager');
+use APP\payment\ojs\OJSPaymentManager;
+use APP\core\Application;
 
 class EditorDecisionActionsManager extends PKPEditorDecisionActionsManager
 {
+    public const SUBMISSION_EDITOR_DECISION_EXTERNAL_REVIEW = 8;
+
+    // Submission and review stages decision actions.
+    public const SUBMISSION_EDITOR_DECISION_ACCEPT = 1;
+    public const SUBMISSION_EDITOR_DECISION_DECLINE = 4;
+
+    // Review stage decisions actions.
+    public const SUBMISSION_EDITOR_DECISION_PENDING_REVISIONS = 2;
+    public const SUBMISSION_EDITOR_DECISION_RESUBMIT = 3;
+    public const SUBMISSION_EDITOR_DECISION_NEW_ROUND = 16;
+
+    // Editorial stage decision actions.
+    public const SUBMISSION_EDITOR_DECISION_SEND_TO_PRODUCTION = 7;
+
     /**
      * Get decision actions labels.
      *
@@ -62,8 +68,8 @@ class EditorDecisionActionsManager extends PKPEditorDecisionActionsManager
 
     /**
      * Check for editor decisions in the review round.
-     *
-     * @param $reviewRound ReviewRound
+     * @param $context \PKP\context\Context
+     * @param $reviewRound \PKP\submission\reviewRound\ReviewRound
      * @param $decisions array
      *
      * @return boolean
@@ -105,25 +111,25 @@ class EditorDecisionActionsManager extends PKPEditorDecisionActionsManager
         $decisions = [];
         if ($makeDecision) {
             $decisions = [
-                SUBMISSION_EDITOR_DECISION_PENDING_REVISIONS => [
+                self::SUBMISSION_EDITOR_DECISION_PENDING_REVISIONS => [
                     'operation' => 'sendReviewsInReview',
                     'name' => 'requestRevisions',
                     'title' => 'editor.submission.decision.requestRevisions',
                 ],
-                SUBMISSION_EDITOR_DECISION_RESUBMIT => [
+                self::SUBMISSION_EDITOR_DECISION_RESUBMIT => [
                     'name' => 'resubmit',
                     'title' => 'editor.submission.decision.resubmit',
                 ],
-                SUBMISSION_EDITOR_DECISION_NEW_ROUND => [
+                self::SUBMISSION_EDITOR_DECISION_NEW_ROUND => [
                     'name' => 'newround',
                     'title' => 'editor.submission.decision.newRound',
                 ],
-                SUBMISSION_EDITOR_DECISION_ACCEPT => [
+                self::SUBMISSION_EDITOR_DECISION_ACCEPT => [
                     'operation' => 'promoteInReview',
                     'name' => 'accept',
                     'title' => 'editor.submission.decision.accept',
                     'toStage' => 'submission.copyediting',
-                    'paymentType' => $paymentManager->publicationEnabled() ? PAYMENT_TYPE_PUBLICATION : null,
+                    'paymentType' => $paymentManager->publicationEnabled() ? OJSPaymentManager::PAYMENT_TYPE_PUBLICATION : null,
                     'paymentAmount' => $context->getData('publicationFee'),
                     'paymentCurrency' => $context->getData('currency'),
                     'requestPaymentText' => __('payment.requestPublicationFee', ['feeAmount' => $context->getData('publicationFee') . ' ' . $context->getData('currency')]),
@@ -131,18 +137,18 @@ class EditorDecisionActionsManager extends PKPEditorDecisionActionsManager
                 ],
             ];
 
-            if ($submission->getStatus() == STATUS_QUEUED) {
+            if ($submission->getStatus() == PKPSubmission::STATUS_QUEUED) {
                 $decisions = $decisions + [
-                    SUBMISSION_EDITOR_DECISION_DECLINE => [
+                    self::SUBMISSION_EDITOR_DECISION_DECLINE => [
                         'operation' => 'sendReviewsInReview',
                         'name' => 'decline',
                         'title' => 'editor.submission.decision.decline',
                     ],
                 ];
             }
-            if ($submission->getStatus() == STATUS_DECLINED) {
+            if ($submission->getStatus() == PKPSubmission::STATUS_DECLINED) {
                 $decisions = $decisions + [
-                    SUBMISSION_EDITOR_DECISION_REVERT_DECLINE => [
+                    self::SUBMISSION_EDITOR_DECISION_REVERT_DECLINE => [
                         'name' => 'revert',
                         'operation' => 'revertDecline',
                         'title' => 'editor.submission.decision.revertDecline',
@@ -152,4 +158,20 @@ class EditorDecisionActionsManager extends PKPEditorDecisionActionsManager
         }
         return $decisions;
     }
+}
+
+if (!PKP_STRICT_MODE) {
+    class_alias('\APP\workflow\EditorDecisionActionsManager', '\EditorDecisionActionsManager');
+    foreach ([
+        'SUBMISSION_EDITOR_DECISION_EXTERNAL_REVIEW',
+        'SUBMISSION_EDITOR_DECISION_ACCEPT',
+        'SUBMISSION_EDITOR_DECISION_DECLINE',
+        'SUBMISSION_EDITOR_DECISION_PENDING_REVISIONS',
+        'SUBMISSION_EDITOR_DECISION_RESUBMIT',
+        'SUBMISSION_EDITOR_DECISION_NEW_ROUND',
+        'SUBMISSION_EDITOR_DECISION_SEND_TO_PRODUCTION',
+    ] as $constantName) {
+        define($constantName, constant('\EditorDecisionActionsManager::' . $constantName));
+    }
+
 }

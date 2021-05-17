@@ -13,11 +13,18 @@
  * @brief Handle TOC (table of contents) grid requests.
  */
 
-import('lib.pkp.classes.controllers.grid.CategoryGridHandler');
 import('controllers.grid.toc.TocGridCategoryRow');
 import('controllers.grid.toc.TocGridRow');
 
+use PKP\controllers\grid\CategoryGridHandler;
 use PKP\core\JSONMessage;
+use PKP\submission\PKPSubmission;
+use PKP\security\authorization\ContextAccessPolicy;
+use PKP\controllers\grid\feature\OrderCategoryGridItemsFeature;
+use PKP\controllers\grid\GridColumn;
+
+use APP\security\authorization\OjsIssueRequiredPolicy;
+use APP\submission\Submission;
 
 class TocGridHandler extends CategoryGridHandler
 {
@@ -45,10 +52,8 @@ class TocGridHandler extends CategoryGridHandler
      */
     public function authorize($request, &$args, $roleAssignments)
     {
-        import('lib.pkp.classes.security.authorization.ContextAccessPolicy');
         $this->addPolicy(new ContextAccessPolicy($request, $roleAssignments));
 
-        import('classes.security.authorization.OjsIssueRequiredPolicy');
         $this->addPolicy(new OjsIssueRequiredPolicy($request, $args));
 
         return parent::authorize($request, $args, $roleAssignments);
@@ -92,7 +97,7 @@ class TocGridHandler extends CategoryGridHandler
                     null,
                     'controllers/grid/common/cell/selectStatusCell.tpl',
                     $tocGridCellProvider,
-                    ['width' => 20, 'alignment' => COLUMN_ALIGNMENT_CENTER]
+                    ['width' => 20, 'alignment' => GridColumn::COLUMN_ALIGNMENT_CENTER]
                 )
             );
         }
@@ -103,7 +108,7 @@ class TocGridHandler extends CategoryGridHandler
      */
     public function initFeatures($request, $args)
     {
-        return [new OrderCategoryGridItemsFeature(ORDER_CATEGORY_GRID_CATEGORIES_AND_ROWS, true, $this)];
+        return [new OrderCategoryGridItemsFeature(OrderCategoryGridItemsFeature::ORDER_CATEGORY_GRID_CATEGORIES_AND_ROWS, true, $this)];
     }
 
     /**
@@ -161,7 +166,6 @@ class TocGridHandler extends CategoryGridHandler
     protected function loadData($request, $filter)
     {
         $issue = $this->getAuthorizedContextObject(ASSOC_TYPE_ISSUE);
-        import('lib.pkp.classes.submission.PKPSubmission'); // STATUS_...
         $submissionsInSections = Services::get('submission')->getInSections($issue->getId(), $request->getContext()->getId());
         foreach ($submissionsInSections as $sectionId => $articles) {
             foreach ($articles['articles'] as $article) {
@@ -183,7 +187,7 @@ class TocGridHandler extends CategoryGridHandler
      */
     public function getDataElementSequence($object)
     {
-        if (is_a($object, 'Submission')) {
+        if ($object instanceof Submission) {
             return $object->getCurrentPublication()->getData('seq');
         } else { // section
             $issue = $this->getAuthorizedContextObject(ASSOC_TYPE_ISSUE);
@@ -250,7 +254,7 @@ class TocGridHandler extends CategoryGridHandler
         if ($submission && $request->checkCSRF()) {
             foreach ((array) $submission->getData('publications') as $publication) {
                 if ($publication->getData('issueId') === (int) $issue->getId()
-                        && in_array($publication->getData('status'), [STATUS_SCHEDULED, STATUS_PUBLISHED])) {
+                        && in_array($publication->getData('status'), [PKPSubmission::STATUS_SCHEDULED, PKPSubmission::STATUS_PUBLISHED])) {
                     $publication = Services::get('publication')->unpublish($publication);
                     $publication = Services::get('publication')->edit(
                         $publication,

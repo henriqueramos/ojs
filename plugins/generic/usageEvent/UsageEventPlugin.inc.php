@@ -15,6 +15,9 @@
 
 import('lib.pkp.plugins.generic.usageEvent.PKPUsageEventPlugin');
 
+use APP\submission\Submission;
+use APP\template\TemplateManager;
+
 class UsageEventPlugin extends PKPUsageEventPlugin
 {
     //
@@ -113,7 +116,7 @@ class UsageEventPlugin extends PKPUsageEventPlugin
                         $canonicalUrlParams = [$pubObject->getId()];
                         $idParams = ['m' . $pubObject->getId()];
                         if (isset($publicationId)) {
-                            // no need to check if the publication exists (for the submisison),
+                            // no need to check if the publication exists (for the submission),
                             // 404 would be returned and the usage event would not be there
                             $canonicalUrlParams = [$pubObject->getId(), 'version', $publicationId];
                         }
@@ -179,6 +182,6 @@ class UsageEventPlugin extends PKPUsageEventPlugin
      */
     protected function isPubIdObjectType($pubObject)
     {
-        return is_a($pubObject, 'Submission');
+        return $pubObject instanceof Submission;
     }
 }

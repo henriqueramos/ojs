@@ -15,7 +15,10 @@
  * @brief Issue galley editing form.
  */
 
-import('lib.pkp.classes.form.Form');
+use PKP\form\Form;
+
+use APP\template\TemplateManager;
+use APP\file\IssueFileManager;
 
 class IssueGalleyForm extends Form
 {
@@ -39,14 +42,14 @@ class IssueGalleyForm extends Form
 
         AppLocale::requireComponents(LOCALE_COMPONENT_APP_EDITOR, LOCALE_COMPONENT_PKP_SUBMISSION);
 
-        $this->addCheck(new FormValidator($this, 'label', 'required', 'editor.issues.galleyLabelRequired'));
-        $this->addCheck(new FormValidatorRegExp($this, 'urlPath', 'optional', 'validator.alpha_dash', '/^[-_a-z0-9]*$/'));
-        $this->addCheck(new FormValidatorPost($this));
-        $this->addCheck(new FormValidatorCSRF($this));
+        $this->addCheck(new \PKP\form\validation\FormValidator($this, 'label', 'required', 'editor.issues.galleyLabelRequired'));
+        $this->addCheck(new \PKP\form\validation\FormValidatorRegExp($this, 'urlPath', 'optional', 'validator.alpha_dash', '/^[-_a-z0-9]*$/'));
+        $this->addCheck(new \PKP\form\validation\FormValidatorPost($this));
+        $this->addCheck(new \PKP\form\validation\FormValidatorCSRF($this));
 
         // Ensure a locale is provided and valid
         $journal = $request->getJournal();
-        $this->addCheck(new FormValidatorCustom(
+        $this->addCheck(new \PKP\form\validation\FormValidatorCustom(
             $this,
             'galleyLocale',
             'required',
@@ -58,7 +61,7 @@ class IssueGalleyForm extends Form
 
         if (!$issueGalley) {
             // A file must be uploaded with a newly-created issue galley.
-            $this->addCheck(new FormValidator($this, 'temporaryFileId', 'required', 'form.fileRequired'));
+            $this->addCheck(new \PKP\form\validation\FormValidator($this, 'temporaryFileId', 'required', 'form.fileRequired'));
         }
     }
 
@@ -165,7 +168,6 @@ class IssueGalleyForm extends Form
      */
     public function execute(...$functionArgs)
     {
-        import('classes.file.IssueFileManager');
         $issueFileManager = new IssueFileManager($this->_issue->getId());
 
         $request = Application::get()->getRequest();

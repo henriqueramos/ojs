@@ -16,7 +16,9 @@
  *
  */
 
-use \PKP\search\SubmissionSearch;
+use PKP\submission\PKPSubmission;
+use PKP\statistics\PKPStatisticsHelper;
+use PKP\search\SubmissionSearch;
 
 class ArticleSearch extends SubmissionSearch
 {
@@ -55,15 +57,15 @@ class ArticleSearch extends SubmissionSearch
                 $orderBy = 'score';
             } else {
                 // Retrieve a metrics report for all submissions.
-                $column = STATISTICS_DIMENSION_SUBMISSION_ID;
+                $column = PKPStatisticsHelper::STATISTICS_DIMENSION_SUBMISSION_ID;
                 $filter = [
-                    STATISTICS_DIMENSION_ASSOC_TYPE => [ASSOC_TYPE_GALLEY, ASSOC_TYPE_SUBMISSION],
-                    STATISTICS_DIMENSION_SUBMISSION_ID => [array_keys($unorderedResults)]
+                    PKPStatisticsHelper::STATISTICS_DIMENSION_ASSOC_TYPE => [ASSOC_TYPE_GALLEY, ASSOC_TYPE_SUBMISSION],
+                    PKPStatisticsHelper::STATISTICS_DIMENSION_SUBMISSION_ID => [array_keys($unorderedResults)]
                 ];
                 if ($orderBy == 'popularityMonth') {
                     $oneMonthAgo = date('Ymd', strtotime('-1 month'));
                     $today = date('Ymd');
-                    $filter[STATISTICS_DIMENSION_DAY] = ['from' => $oneMonthAgo, 'to' => $today];
+                    $filter[PKPStatisticsHelper::STATISTICS_DIMENSION_DAY] = ['from' => $oneMonthAgo, 'to' => $today];
                 }
                 $rawReport = $application->getMetrics($metricType, $column, $filter);
                 foreach ($rawReport as $row) {
@@ -327,7 +329,7 @@ class ArticleSearch extends SubmissionSearch
         if ($result === false) {
             // Retrieve the article.
             $article = Services::get('submission')->get($submissionId);
-            if ($article->getData('status') === STATUS_PUBLISHED) {
+            if ($article->getData('status') === PKPSubmission::STATUS_PUBLISHED) {
                 // Retrieve keywords (if any).
                 $submissionSubjectDao = DAORegistry::getDAO('SubmissionKeywordDAO'); /* @var $submissionSubjectDao SubmissionKeywordDAO */
                 $allSearchTerms = array_filter($submissionSubjectDao->getKeywords($article->getId(), [AppLocale::getLocale(), $article->getLocale(), AppLocale::getPrimaryLocale()]));

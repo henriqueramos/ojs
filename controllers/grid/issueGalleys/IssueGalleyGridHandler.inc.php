@@ -13,10 +13,19 @@
  * @brief Handle issues grid requests.
  */
 
-import('lib.pkp.classes.controllers.grid.GridHandler');
-import('controllers.grid.issueGalleys.IssueGalleyGridRow');
-
+use PKP\controllers\grid\GridHandler;
+use PKP\controllers\grid\GridColumn;
+use PKP\linkAction\LinkAction;
+use PKP\linkAction\request\AjaxModal;
 use PKP\core\JSONMessage;
+use PKP\file\TemporaryFileManager;
+use PKP\security\authorization\ContextAccessPolicy;
+use PKP\security\authorization\OjsIssueGalleyRequiredPolicy;
+
+use APP\security\authorization\OjsIssueRequiredPolicy;
+use APP\file\IssueFileManager;
+
+import('controllers.grid.issueGalleys.IssueGalleyGridRow');
 
 class IssueGalleyGridHandler extends GridHandler
 {
@@ -44,15 +53,12 @@ class IssueGalleyGridHandler extends GridHandler
      */
     public function authorize($request, &$args, $roleAssignments)
     {
-        import('lib.pkp.classes.security.authorization.ContextAccessPolicy');
         $this->addPolicy(new ContextAccessPolicy($request, $roleAssignments));
 
-        import('classes.security.authorization.OjsIssueRequiredPolicy');
         $this->addPolicy(new OjsIssueRequiredPolicy($request, $args));
 
         // If a signoff ID was specified, authorize it.
         if ($request->getUserVar('issueGalleyId')) {
-            import('classes.security.authorization.OjsIssueGalleyRequiredPolicy');
             $this->addPolicy(new OjsIssueGalleyRequiredPolicy($request, $args));
         }
 
@@ -114,7 +120,6 @@ class IssueGalleyGridHandler extends GridHandler
 
         // Add action
         $router = $request->getRouter();
-        import('lib.pkp.classes.linkAction.request.AjaxModal');
         $this->addAction(
             new LinkAction(
                 'add',
@@ -234,7 +239,6 @@ class IssueGalleyGridHandler extends GridHandler
     {
         $user = $request->getUser();
 
-        import('lib.pkp.classes.file.TemporaryFileManager');
         $temporaryFileManager = new TemporaryFileManager();
         $temporaryFile = $temporaryFileManager->handleUpload('uploadedFile', $user->getId());
         if ($temporaryFile) {
@@ -260,7 +264,6 @@ class IssueGalleyGridHandler extends GridHandler
     {
         $issue = $this->getAuthorizedContextObject(ASSOC_TYPE_ISSUE);
         $issueGalley = $this->getAuthorizedContextObject(ASSOC_TYPE_ISSUE_GALLEY);
-        import('classes.file.IssueFileManager');
         $issueFileManager = new IssueFileManager($issue->getId());
         return $issueFileManager->downloadById($issueGalley->getFileId());
     }

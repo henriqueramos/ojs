@@ -13,9 +13,14 @@
  * @brief Class for a cell provider that can retrieve labels from submissions
  */
 
-import('lib.pkp.classes.controllers.grid.DataObjectGridCellProvider');
+use PKP\controllers\grid\DataObjectGridCellProvider;
+use PKP\linkAction\LinkAction;
+use PKP\linkAction\request\RedirectAction;
+use PKP\linkAction\request\AjaxModal;
+use PKP\controllers\grid\GridHandler;
 
 use APP\core\Services;
+use APP\submission\Submission;
 
 class ExportPublishedSubmissionsListGridCellProvider extends DataObjectGridCellProvider
 {
@@ -44,13 +49,12 @@ class ExportPublishedSubmissionsListGridCellProvider extends DataObjectGridCellP
      *
      * @copydoc GridCellProvider::getCellActions()
      */
-    public function getCellActions($request, $row, $column, $position = GRID_ACTION_POSITION_DEFAULT)
+    public function getCellActions($request, $row, $column, $position = GridHandler::GRID_ACTION_POSITION_DEFAULT)
     {
         $submission = $row->getData();
         $columnId = $column->getId();
-        assert(is_a($submission, 'Submission') && !empty($columnId));
+        assert($submission instanceof Submission && !empty($columnId));
 
-        import('lib.pkp.classes.linkAction.request.RedirectAction');
         switch ($columnId) {
             case 'title':
                 $this->_titleColumn = $column;
@@ -78,7 +82,6 @@ class ExportPublishedSubmissionsListGridCellProvider extends DataObjectGridCellP
                     // Link to the issue edit modal
                     $application = Application::get();
                     $dispatcher = $application->getDispatcher();
-                    import('lib.pkp.classes.linkAction.request.AjaxModal');
                     return [
                         new LinkAction(
                             'edit',
@@ -115,7 +118,7 @@ class ExportPublishedSubmissionsListGridCellProvider extends DataObjectGridCellP
     {
         $submission = $row->getData();
         $columnId = $column->getId();
-        assert(is_a($submission, 'Submission') && !empty($columnId));
+        assert($submission instanceof Submission && !empty($columnId));
 
         switch ($columnId) {
             case 'id':

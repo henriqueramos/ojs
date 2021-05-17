@@ -15,6 +15,10 @@
 
 import('classes.subscription.form.SubscriptionForm');
 
+use PKP\notification\PKPNotification;
+
+use APP\notification\NotificationManager;
+
 class IndividualSubscriptionForm extends SubscriptionForm
 {
     /**
@@ -51,16 +55,16 @@ class IndividualSubscriptionForm extends SubscriptionForm
         }
 
         // Ensure subscription type is valid
-        $this->addCheck(new FormValidatorCustom($this, 'typeId', 'required', 'manager.subscriptions.form.typeIdValid', function ($typeId) use ($journalId) {
+        $this->addCheck(new \PKP\form\validation\FormValidatorCustom($this, 'typeId', 'required', 'manager.subscriptions.form.typeIdValid', function ($typeId) use ($journalId) {
             $subscriptionTypeDao = DAORegistry::getDAO('SubscriptionTypeDAO'); /* @var $subscriptionTypeDao SubscriptionTypeDAO */
             return $subscriptionTypeDao->subscriptionTypeExistsByTypeId($typeId, $journalId) && !$subscriptionTypeDao->getSubscriptionTypeInstitutional($typeId);
         }));
 
         // Ensure that user does not already have a subscription for this journal
         if (!isset($subscriptionId)) {
-            $this->addCheck(new FormValidatorCustom($this, 'userId', 'required', 'manager.subscriptions.form.subscriptionExists', [DAORegistry::getDAO('IndividualSubscriptionDAO'), 'subscriptionExistsByUserForJournal'], [$journalId], true));
+            $this->addCheck(new \PKP\form\validation\FormValidatorCustom($this, 'userId', 'required', 'manager.subscriptions.form.subscriptionExists', [DAORegistry::getDAO('IndividualSubscriptionDAO'), 'subscriptionExistsByUserForJournal'], [$journalId], true));
         } else {
-            $this->addCheck(new FormValidatorCustom($this, 'userId', 'required', 'manager.subscriptions.form.subscriptionExists', function ($userId) use ($journalId, $subscriptionId) {
+            $this->addCheck(new \PKP\form\validation\FormValidatorCustom($this, 'userId', 'required', 'manager.subscriptions.form.subscriptionExists', function ($userId) use ($journalId, $subscriptionId) {
                 $subscriptionDao = DAORegistry::getDAO('IndividualSubscriptionDAO'); /* @var $subscriptionDao IndividualSubscriptionDAO */
                 $checkSubscription = $subscriptionDao->getByUserIdForJournal($userId, $journalId);
                 return (!$checkSubscription || $checkSubscription->getId() == $subscriptionId) ? true : false;
@@ -93,10 +97,9 @@ class IndividualSubscriptionForm extends SubscriptionForm
         if ($this->_data['notifyEmail'] == 1) {
             $mail = $this->_prepareNotificationEmail('SUBSCRIPTION_NOTIFY');
             if (!$mail->send()) {
-                import('classes.notification.NotificationManager');
                 $notificationMgr = new NotificationManager();
                 $request = Application::get()->getRequest();
-                $notificationMgr->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_ERROR, ['contents' => __('email.compose.error')]);
+                $notificationMgr->createTrivialNotification($request->getUser()->getId(), PKPNotification::NOTIFICATION_TYPE_ERROR, ['contents' => __('email.compose.error')]);
             }
         }
     }

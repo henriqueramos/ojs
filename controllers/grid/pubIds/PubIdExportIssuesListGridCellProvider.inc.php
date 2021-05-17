@@ -13,7 +13,11 @@
  * @brief Class for a cell provider that can retrieve labels from issues with pub ids
  */
 
-import('lib.pkp.classes.controllers.grid.DataObjectGridCellProvider');
+use PKP\controllers\grid\DataObjectGridCellProvider;
+use PKP\controllers\grid\GridHandler;
+use PKP\linkAction\LinkAction;
+use PKP\linkAction\request\RedirectAction;
+use PKP\linkAction\request\AjaxModal;
 
 class PubIdExportIssuesListGridCellProvider extends DataObjectGridCellProvider
 {
@@ -42,7 +46,7 @@ class PubIdExportIssuesListGridCellProvider extends DataObjectGridCellProvider
      *
      * @copydoc GridCellProvider::getCellActions()
      */
-    public function getCellActions($request, $row, $column, $position = GRID_ACTION_POSITION_DEFAULT)
+    public function getCellActions($request, $row, $column, $position = GridHandler::GRID_ACTION_POSITION_DEFAULT)
     {
         $publishedIssue = $row->getData();
         $columnId = $column->getId();
@@ -53,7 +57,6 @@ class PubIdExportIssuesListGridCellProvider extends DataObjectGridCellProvider
                 // Link to the issue edit modal
                 $application = Application::get();
                 $dispatcher = $application->getDispatcher();
-                import('lib.pkp.classes.linkAction.request.AjaxModal');
                 return [
                     new LinkAction(
                         'edit',
@@ -71,7 +74,6 @@ class PubIdExportIssuesListGridCellProvider extends DataObjectGridCellProvider
                 $statusActions = $this->_plugin->getStatusActions($publishedIssue);
                 if ($status && array_key_exists($status, $statusActions)) {
                     assert(array_key_exists($status, $statusNames));
-                    import('lib.pkp.classes.linkAction.request.RedirectAction');
                     return [
                         new LinkAction(
                             'edit',

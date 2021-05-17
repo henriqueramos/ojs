@@ -12,7 +12,10 @@
 * @brief Grid cell provider for section grid
  */
 
-import('lib.pkp.classes.controllers.grid.GridCellProvider');
+use PKP\linkAction\LinkAction;
+use PKP\controllers\grid\GridCellProvider;
+use PKP\controllers\grid\GridHandler;
+use PKP\controllers\grid\GridColumn;
 
 class SectionGridCellProvider extends GridCellProvider
 {
@@ -39,14 +42,13 @@ class SectionGridCellProvider extends GridCellProvider
     /**
      * @see GridCellProvider::getCellActions()
      */
-    public function getCellActions($request, $row, $column, $position = GRID_ACTION_POSITION_DEFAULT)
+    public function getCellActions($request, $row, $column, $position = GridHandler::GRID_ACTION_POSITION_DEFAULT)
     {
         switch ($column->getId()) {
             case 'inactive':
                 $element = $row->getData(); /* @var $element \PKP\core\DataObject */
 
                 $router = $request->getRouter();
-                import('lib.pkp.classes.linkAction.LinkAction');
 
                 if ($element['inactive']) {
                     return [new LinkAction(

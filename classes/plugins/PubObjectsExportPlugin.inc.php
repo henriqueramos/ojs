@@ -13,7 +13,7 @@
  * @brief Basis class for XML metadata export plugins
  */
 
-import('lib.pkp.classes.plugins.ImportExportPlugin');
+namespace APP\plugins;
 
 // The statuses.
 define('EXPORT_STATUS_ANY', '');
@@ -29,7 +29,22 @@ define('EXPORT_ACTION_DEPOSIT', 'deposit');
 // Configuration errors.
 define('EXPORT_CONFIG_ERROR_SETTINGS', 0x02);
 
-use \PKP\core\JSONMessage;
+use PKP\core\JSONMessage;
+use PKP\db\SchemaDAO;
+use PKP\plugins\HookRegistry;
+use PKP\submission\PKPSubmission;
+use PKP\file\FileManager;
+use PKP\linkAction\LinkAction;
+use PKP\linkAction\request\NullAction;
+use PKP\plugins\ImportExportPlugin;
+use PKP\db\DAORegistry;
+use PKP\notification\PKPNotification;
+
+use APP\plugins\PubObjectCache;
+use APP\template\TemplateManager;
+use APP\i18n\AppLocale;
+use APP\core\Application;
+use APP\notification\NotificationManager;
 
 abstract class PubObjectsExportPlugin extends ImportExportPlugin {
 	/** @var PubObjectCache */
@@ -40,9 +55,8 @@ abstract class PubObjectsExportPlugin extends ImportExportPlugin {
 	 * @return PubObjectCache
 	 */
 	function getCache() {
-		if (!is_a($this->_cache, 'PubObjectCache')) {
+		if (!$this->_cache instanceof PubObjectCache) {
 			// Instantiate the cache.
-			import('classes.plugins.PubObjectCache');
 			$this->_cache = new PubObjectCache();
 		}
 		return $this->_cache;
@@ -83,7 +97,7 @@ abstract class PubObjectsExportPlugin extends ImportExportPlugin {
 				$form->readInputData();
 				if ($form->validate()) {
 					$form->execute();
-					$notificationManager->createTrivialNotification($user->getId(), NOTIFICATION_TYPE_SUCCESS);
+					$notificationManager->createTrivialNotification($user->getId(), PKPNotification::NOTIFICATION_TYPE_SUCCESS);
 					return new JSONMessage(true);
 				} else {
 					return new JSONMessage(true, $form->fetch($request));
@@ -130,7 +144,6 @@ abstract class PubObjectsExportPlugin extends ImportExportPlugin {
 				// Add link actions
 				$actions = $this->getExportActions($context);
 				$actionNames = array_intersect_key($this->getExportActionNames(), array_flip($actions));
-				import('lib.pkp.classes.linkAction.request.NullAction');
 				$linkActions = array();
 				foreach ($actionNames as $action => $actionName) {
 					$linkActions[] = new LinkAction($action, new NullAction(), $actionName);
@@ -201,19 +214,18 @@ abstract class PubObjectsExportPlugin extends ImportExportPlugin {
 					$this->_sendNotification(
 						$request->getUser(),
 						'plugins.importexport.common.validation.success',
-						NOTIFICATION_TYPE_SUCCESS
+						PKPNotification::NOTIFICATION_TYPE_SUCCESS
 					);
 				} else {
 					$this->_sendNotification(
 						$request->getUser(),
 						'plugins.importexport.common.validation.fail',
-						NOTIFICATION_TYPE_ERROR
+						PKPNotification::NOTIFICATION_TYPE_ERROR
 					);
 				}
 
 				$request->redirect(null, null, null, $path, null, $tab);
 			} else {
-				import('lib.pkp.classes.file.FileManager');
 				$fileManager = new FileManager();
 				$exportFileName = $this->getExportFileName($this->getExportPath(), $objectsFileNamePart, $context, '.xml');
 				$fileManager->writeFile($exportFileName, $exportXml);
@@ -226,7 +238,6 @@ abstract class PubObjectsExportPlugin extends ImportExportPlugin {
 			$exportXml = $this->exportXML($objects, $filter, $context, $noValidation);
 			// Write the XML to a file.
 			// export file name example: crossref-20160723-160036-articles-1.xml
-			import('lib.pkp.classes.file.FileManager');
 			$fileManager = new FileManager();
 			$exportFileName = $this->getExportFileName($this->getExportPath(), $objectsFileNamePart, $context, '.xml');
 			$fileManager->writeFile($exportFileName, $exportXml);
@@ -237,7 +248,7 @@ abstract class PubObjectsExportPlugin extends ImportExportPlugin {
 				$this->_sendNotification(
 					$request->getUser(),
 					$this->getDepositSuccessNotificationMessageKey(),
-					NOTIFICATION_TYPE_SUCCESS
+					PKPNotification::NOTIFICATION_TYPE_SUCCESS
 				);
 			} else {
 				if (is_array($result)) {
@@ -246,7 +257,7 @@ abstract class PubObjectsExportPlugin extends ImportExportPlugin {
 						$this->_sendNotification(
 							$request->getUser(),
 							$error[0],
-							NOTIFICATION_TYPE_ERROR,
+							PKPNotification::NOTIFICATION_TYPE_ERROR,
 							(isset($error[1]) ? $error[1] : null)
 						);
 					}
@@ -626,7 +637,6 @@ abstract class PubObjectsExportPlugin extends ImportExportPlugin {
 		if ($command == 'export' && $outputFile) file_put_contents($outputFile, $exportXml);
 
 		if ($command == 'register') {
-			import('lib.pkp.classes.file.FileManager');
 			$fileManager = new FileManager();
 			$exportFileName = $this->getExportFileName($this->getExportPath(), $objectsFileNamePart, $context, '.xml');
 			$fileManager->writeFile($exportFileName, $exportXml);
@@ -662,7 +672,7 @@ abstract class PubObjectsExportPlugin extends ImportExportPlugin {
 			return Services::get('submission')->get($submissionId);
 		}, $submissionIds);
 		return array_filter($submissions, function($submission) {
-			return $submission->getData('status') === STATUS_PUBLISHED;
+			return $submission->getData('status') === PKPSubmission::STATUS_PUBLISHED;
 		});
 	}
 
@@ -707,7 +717,6 @@ abstract class PubObjectsExportPlugin extends ImportExportPlugin {
 	function _sendNotification($user, $message, $notificationType, $param = null) {
 		static $notificationManager = null;
 		if (is_null($notificationManager)) {
-			import('classes.notification.NotificationManager');
 			$notificationManager = new NotificationManager();
 		}
 		if (!is_null($param)) {
@@ -759,27 +768,8 @@ abstract class PubObjectsExportPlugin extends ImportExportPlugin {
 			DAORegistry::getDAO('IssueDAO'),
 		);
 	}
-
-	/**
-	 * @see ImportExportPlugin::getImportFilter
-	 */
-	function getImportFilter($xmlFile) {
-		throw new BadMethodCallException();
-	}
-
-	/**
-	 * @see ImportExportPlugin::getExportFilter
-	 */
-	function getExportFilter($exportType) {
-		throw new BadMethodCallException();
-	}
-
-	/**
-	 * @see ImportExportPlugin::getAppSpecificDeployment
-	 */
-	function getAppSpecificDeployment($context, $user) {
-		throw new BadMethodCallException();
-	}
 }
 
-
+if (!PKP_STRICT_MODE) {
+    class_alias('\APP\plugins\PubObjectsExportPlugin', '\PubObjectsExportPlugin');
+}

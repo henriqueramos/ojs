@@ -14,7 +14,12 @@
  */
 
 import('classes.search.ArticleSearch');
-import('classes.handler.Handler');
+
+use PKP\submission\PKPSubmission;
+
+use APP\security\authorization\OjsJournalMustPublishPolicy;
+use APP\handler\Handler;
+use APP\template\TemplateManager;
 
 class SearchHandler extends Handler
 {
@@ -23,7 +28,6 @@ class SearchHandler extends Handler
      */
     public function authorize($request, &$args, $roleAssignments)
     {
-        import('classes.security.authorization.OjsJournalMustPublishPolicy');
         if ($request->getContext()) {
             $this->addPolicy(new OjsJournalMustPublishPolicy($request));
         }
@@ -145,7 +149,7 @@ class SearchHandler extends Handler
         // Prepare and display the search template.
         $this->setupTemplate($request);
         $templateMgr = TemplateManager::getManager($request);
-        $templateMgr->setCacheability(CACHEABILITY_NO_STORE);
+        $templateMgr->setCacheability(TemplateManager::CACHEABILITY_NO_STORE);
 
         // Result set ordering options.
         $orderByOptions = $articleSearch->getResultSetOrderingOptions($request);
@@ -236,7 +240,7 @@ class SearchHandler extends Handler
             }, $authorRecords);
             $submissionIds = array_filter(array_map(function ($publicationId) {
                 $publication = Services::get('publication')->get($publicationId);
-                return $publication->getData('status') == STATUS_PUBLISHED ? $publication->getData('submissionId') : null;
+                return $publication->getData('status') == PKPSubmission::STATUS_PUBLISHED ? $publication->getData('submissionId') : null;
             }, array_unique($publicationIds)));
             $submissions = array_map(function ($submissionId) {
                 return Services::get('submission')->get($submissionId);
@@ -328,7 +332,7 @@ class SearchHandler extends Handler
         $templateMgr = TemplateManager::getManager($request);
         $journal = $request->getJournal();
         if (!$journal || !$journal->getData('restrictSiteAccess')) {
-            $templateMgr->setCacheability(CACHEABILITY_PUBLIC);
+            $templateMgr->setCacheability(TemplateManager::CACHEABILITY_PUBLIC);
         }
     }
 }

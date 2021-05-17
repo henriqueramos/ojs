@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2019-11-19T10:49:18+00:00\n"
-"PO-Revision-Date: 2021-04-19 18:51+0000\n"
+"PO-Revision-Date: 2021-05-07 08:53+0000\n"
 "Last-Translator: Jiří Dlouhý <jiri.dlouhy@czp.cuni.cz>\n"
 "Language-Team: Czech <http://translate.pkp.sfu.ca/projects/ojs/manager/cs_CZ/"
 ">\n"
@@ -630,9 +630,6 @@ msgstr "Identifikace obsahu časopisu"
 
 msgid "manager.setup.publisher"
 msgstr "Vydavatel"
-
-msgid "manager.setup.publishingDescription"
-msgstr "Název organizace vydávající časopis bude zobrazen v části O časopisu."
 
 msgid "manager.setup.referenceLinking"
 msgstr "Odkazování na reference"
@@ -1743,9 +1740,6 @@ msgstr "Zahrnout zabezpečený odkaz do e-mailové pozvánky recenzentům."
 msgid "manager.setup.reviewOptions.restrictReviewerFileAccess"
 msgstr "Omezte přístup k souborům"
 
-msgid "manager.setup.publishing"
-msgstr "Podrobnosti o publikování"
-
 msgid "manager.setup.privacyStatement.success"
 msgstr "Prohlášení o ochraně osobních údajů bylo aktualizováno."
 
@@ -1863,3 +1857,8 @@ msgstr "Procesu se nepovedlo analyzovat sazebnice čísla"
 
 msgid "plugins.importexport.native.export.issues.results"
 msgstr "Export výsledků čísla"
+
+msgid "manager.setup.selectCountry"
+msgstr ""
+"Vyberte zemi, kde se tento časopis nachází, nebo zemi ve které má časopis či "
+"jeho vydavatel oficiální adresu."

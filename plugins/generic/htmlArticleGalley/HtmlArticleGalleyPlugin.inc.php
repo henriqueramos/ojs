@@ -15,7 +15,10 @@
 
 import('lib.pkp.classes.plugins.GenericPlugin');
 
-use \PKP\submission\SubmissionFile;
+use PKP\submission\SubmissionFile;
+
+use APP\template\TemplateManager;
+use APP\file\PublicFileManager;
 
 class HtmlArticleGalleyPlugin extends GenericPlugin
 {
@@ -151,7 +154,6 @@ class HtmlArticleGalleyPlugin extends GenericPlugin
         $contents = Services::get('file')->fs->read($submissionFile->getData('path'));
 
         // Replace media file references
-        import('lib.pkp.classes.submission.SubmissionFile'); // Constants
         $embeddableFilesIterator = Services::get('submissionFile')->getMany([
             'assocTypes' => [ASSOC_TYPE_SUBMISSION_FILE],
             'assocIds' => [$submissionFile->getId()],
@@ -298,14 +300,12 @@ class HtmlArticleGalleyPlugin extends GenericPlugin
                 break;
             case 'sitepublic':
                 array_shift($urlParts);
-                import('classes.file.PublicFileManager');
                 $publicFileManager = new PublicFileManager();
                 $url = $request->getBaseUrl() . '/' . $publicFileManager->getSiteFilesPath() . '/' . implode('/', $urlParts) . ($anchor ? '#' . $anchor : '');
                 break;
             case 'public':
                 array_shift($urlParts);
                 $journal = $request->getJournal();
-                import('classes.file.PublicFileManager');
                 $publicFileManager = new PublicFileManager();
                 $url = $request->getBaseUrl() . '/' . $publicFileManager->getContextFilesPath($journal->getId()) . '/' . implode('/', $urlParts) . ($anchor ? '#' . $anchor : '');
                 break;

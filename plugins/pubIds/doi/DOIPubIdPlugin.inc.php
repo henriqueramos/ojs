@@ -13,7 +13,17 @@
  * @brief DOI plugin class
  */
 
-import('classes.plugins.PubIdPlugin');
+use PKP\services\interfaces\EntityWriteInterface;
+use PKP\linkAction\LinkAction;
+use PKP\linkAction\request\RemoteActionConfirmationModal;
+
+use APP\plugins\PubIdPlugin;
+use APP\publication\Publication;
+
+// FIXME: Add namespacing
+//use \Issue;
+//use \IssueGalley;
+//use \ArticleGalley;
 
 class DOIPubIdPlugin extends PubIdPlugin
 {
@@ -172,10 +182,10 @@ class DOIPubIdPlugin extends PubIdPlugin
     public function getLinkActions($pubObject)
     {
         $linkActions = [];
-        import('lib.pkp.classes.linkAction.request.RemoteActionConfirmationModal');
         $request = Application::get()->getRequest();
         $userVars = $request->getUserVars();
-        $userVars['pubIdPlugIn'] = get_class($this);
+        $classNameParts = explode('\\', get_class($this)); // Separate namespace info from class name
+        $userVars['pubIdPlugIn'] = end($classNameParts);
         // Clear object pub id
         $linkActions['clearPubIdLinkActionDoi'] = new LinkAction(
             'clearPubId',
@@ -191,7 +201,7 @@ class DOIPubIdPlugin extends PubIdPlugin
             __('plugins.pubIds.doi.editor.clearObjectsDoi')
         );
 
-        if (is_a($pubObject, 'Issue')) {
+        if ($pubObject instanceof Issue) {
             // Clear issue objects pub ids
             $linkActions['clearIssueObjectsPubIdsLinkActionDoi'] = new LinkAction(
                 'clearObjectsPubIds',
@@ -323,7 +333,7 @@ class DOIPubIdPlugin extends PubIdPlugin
             return;
         }
 
-        if ($action === VALIDATE_ACTION_ADD) {
+        if ($action === EntityWriteInterface::VALIDATE_ACTION_ADD) {
             $submission = Services::get('submission')->get($props['submissionId']);
         } else {
             $publication = Services::get('publication')->get($props['id']);
@@ -385,12 +395,12 @@ class DOIPubIdPlugin extends PubIdPlugin
         $props = $args[2];
 
         // DOIs are not supported for IssueGalleys
-        if (get_class($object) === 'IssueGalley') {
+        if ($object instanceof IssueGalley) {
             return;
         }
 
         // DOIs are already added to property values for Publications and Galleys
-        if (get_class($object) === 'Publication' || get_class($object) === 'ArticleGalley') {
+        if ($object instanceof Publication || $object instanceof ArticleGalley) {
             return;
         }
 

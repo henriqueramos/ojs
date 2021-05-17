@@ -46,6 +46,12 @@ define('DATACITE_DESCTYPE_OTHER', 'Other');
 
 import('lib.pkp.plugins.importexport.native.filter.NativeExportFilter');
 
+use APP\submission\Submission;
+use APP\workflow\EditorDecisionActionsManager;
+
+// FIXME: Add namespacing
+// use Issue;
+// use ArticleGalley;
 
 class DataciteXmlFilter extends NativeExportFilter
 {
@@ -94,17 +100,17 @@ class DataciteXmlFilter extends NativeExportFilter
 
         // Get all objects
         $issue = $article = $galley = $galleyFile = null;
-        if (is_a($pubObject, 'Issue')) {
+        if ($pubObject instanceof Issue) {
             $issue = $pubObject;
             if (!$cache->isCached('issues', $issue->getId())) {
                 $cache->add($issue, null);
             }
-        } elseif (is_a($pubObject, 'Submission')) {
+        } elseif ($pubObject instanceof Submission) {
             $article = $pubObject;
             if (!$cache->isCached('articles', $article->getId())) {
                 $cache->add($article, null);
             }
-        } elseif (is_a($pubObject, 'ArticleGalley')) {
+        } elseif ($pubObject instanceof ArticleGalley) {
             $galley = $pubObject;
             $galleyFile = $galley->getFile();
             $publication = Services::get('publication')->get($galley->getData('publicationId'));
@@ -402,7 +408,7 @@ class DataciteXmlFilter extends NativeExportFilter
                 $editDecisionDao = DAORegistry::getDAO('EditDecisionDAO'); /* @var $editDecisionDao EditDecisionDAO */
                 $editDecisions = $editDecisionDao->getEditorDecisions($article->getId());
                 foreach (array_reverse($editDecisions) as $editDecision) {
-                    if ($editDecision['decision'] == SUBMISSION_EDITOR_DECISION_ACCEPT) {
+                    if ($editDecision['decision'] == EditorDecisionActionsManager::SUBMISSION_EDITOR_DECISION_ACCEPT) {
                         $dates[DATACITE_DATE_ACCEPTED] = $editDecision['dateDecided'];
                     }
                 }
@@ -732,10 +738,10 @@ class DataciteXmlFilter extends NativeExportFilter
     public function getObjectLocalePrecedence($context, $article, $publication, $galley)
     {
         $locales = [];
-        if (is_a($galley, 'ArticleGalley') && AppLocale::isLocaleValid($galley->getLocale())) {
+        if ($galley instanceof ArticleGalley && AppLocale::isLocaleValid($galley->getLocale())) {
             $locales[] = $galley->getLocale();
         }
-        if (is_a($article, 'Submission')) {
+        if ($article instanceof Submission) {
             if (!is_null($publication->getData('locale'))) {
                 $locales[] = $publication->getData('locale');
             }

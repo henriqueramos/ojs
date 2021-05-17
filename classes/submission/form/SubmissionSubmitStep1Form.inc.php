@@ -13,7 +13,14 @@
  * @brief Form for Step 1 of author submission.
  */
 
-import('lib.pkp.classes.submission.form.PKPSubmissionSubmitStep1Form');
+namespace APP\submission\form;
+
+use PKP\submission\form\PKPSubmissionSubmitStep1Form;
+use PKP\db\DAORegistry;
+use PKP\core\PKPString;
+
+use APP\template\TemplateManager;
+use APP\core\Application;
 
 class SubmissionSubmitStep1Form extends PKPSubmissionSubmitStep1Form
 {
@@ -25,7 +32,7 @@ class SubmissionSubmitStep1Form extends PKPSubmissionSubmitStep1Form
     public function __construct($context, $submission = null)
     {
         parent::__construct($context, $submission);
-        $this->addCheck(new FormValidatorCustom($this, 'sectionId', 'required', 'author.submit.form.sectionRequired', [DAORegistry::getDAO('SectionDAO'), 'sectionExists'], [$context->getId()]));
+        $this->addCheck(new \PKP\form\validation\FormValidatorCustom($this, 'sectionId', 'required', 'author.submit.form.sectionRequired', [DAORegistry::getDAO('SectionDAO'), 'sectionExists'], [$context->getId()]));
     }
 
     /**
@@ -145,4 +152,8 @@ class SubmissionSubmitStep1Form extends PKPSubmissionSubmitStep1Form
         $publication->setData('sectionId', $this->getData('sectionId'));
         parent::setPublicationData($publication, $submission);
     }
+}
+
+if (!PKP_STRICT_MODE) {
+    class_alias('\APP\submission\form\SubmissionSubmitStep1Form', '\SubmissionSubmitStep1Form');
 }

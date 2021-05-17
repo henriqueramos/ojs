@@ -13,10 +13,10 @@
 * @brief Helper class that encapsulates section business logic
 */
 
-namespace APP\Services;
+namespace APP\services;
 
 use APP\core\Services;
-use PKP\Services\interfaces\EntityPropertyInterface;
+use PKP\services\interfaces\EntityPropertyInterface;
 
 use PKP\services\PKPSchemaService;
 
@@ -51,7 +51,7 @@ class SectionService implements EntityPropertyInterface
     }
 
     /**
-     * @copydoc \PKP\Services\interfaces\EntityPropertyInterface::getProperties()
+     * @copydoc \PKP\services\interfaces\EntityPropertyInterface::getProperties()
      *
      * @param null|mixed $args
      */
@@ -86,7 +86,7 @@ class SectionService implements EntityPropertyInterface
     }
 
     /**
-     * @copydoc \PKP\Services\interfaces\EntityPropertyInterface::getSummaryProperties()
+     * @copydoc \PKP\services\interfaces\EntityPropertyInterface::getSummaryProperties()
      *
      * @param null|mixed $args
      */
@@ -102,7 +102,7 @@ class SectionService implements EntityPropertyInterface
     }
 
     /**
-     * @copydoc \PKP\Services\interfaces\EntityPropertyInterface::getFullProperties()
+     * @copydoc \PKP\services\interfaces\EntityPropertyInterface::getFullProperties()
      *
      * @param null|mixed $args
      */

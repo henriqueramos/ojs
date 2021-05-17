@@ -13,13 +13,17 @@
  *  requirements.
  */
 
-namespace APP\Services;
+namespace APP\services;
 
-use Application;
-use AppLocale;
-use DAORegistry;
-use PKP\Services\PKPPublicationService;
-use Services;
+use PKP\submission\PKPSubmission;
+use PKP\db\DAORegistry;
+use PKP\services\PKPPublicationService;
+use PKP\services\interfaces\EntityWriteInterface;
+
+use APP\core\Services;
+use APP\i18n\AppLocale;
+use APP\core\Application;
+use APP\payment\ojs\OJSPaymentManager;
 
 class PublicationService extends PKPPublicationService
 {
@@ -128,7 +132,7 @@ class PublicationService extends PKPPublicationService
         if ($section) {
 
             // Require abstracts if the section requires them
-            if ($action === VALIDATE_ACTION_ADD && !$section->getData('abstractsNotRequired') && empty($props['abstract'])) {
+            if ($action === EntityWriteInterface::VALIDATE_ACTION_ADD && !$section->getData('abstractsNotRequired') && empty($props['abstract'])) {
                 $errors['abstract'][$primaryLocale] = [__('author.submit.form.abstractRequired')];
             }
 
@@ -204,7 +208,7 @@ class PublicationService extends PKPPublicationService
         $paymentManager = \Application::getPaymentManager($context);
         $completedPaymentDao = \DAORegistry::getDAO('OJSCompletedPaymentDAO'); /* @var $completedPaymentDao OJSCompletedPaymentDAO */
         $publicationFeeEnabled = $paymentManager->publicationEnabled();
-        $publicationFeePayment = $completedPaymentDao->getByAssoc(null, PAYMENT_TYPE_PUBLICATION, $submission->getId());
+        $publicationFeePayment = $completedPaymentDao->getByAssoc(null, OJSPaymentManager::PAYMENT_TYPE_PUBLICATION, $submission->getId());
         if ($publicationFeeEnabled && !$publicationFeePayment) {
             $errors['publicationFeeStatus'] = __('editor.article.payment.publicationFeeNotPaid');
         }
@@ -259,7 +263,7 @@ class PublicationService extends PKPPublicationService
         $issue = Services::get('issue')->get($newPublication->getData('issueId'));
         if ($issue && !$issue->getData('published')) {
             $newPublication->setData('datePublished', null);
-            $newPublication->setData('status', STATUS_SCHEDULED);
+            $newPublication->setData('status', PKPSubmission::STATUS_SCHEDULED);
         }
     }
 

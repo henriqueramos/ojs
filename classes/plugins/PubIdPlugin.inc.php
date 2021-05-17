@@ -13,10 +13,20 @@
  * @brief Public identifiers plugins common functions
  */
 
-import('lib.pkp.classes.plugins.PKPPubIdPlugin');
+namespace APP\plugins;
 
-use \PKP\core\JSONMessage;
-use \PKP\submission\SubmissionFile;
+use PKP\plugins\PKPPubIdPlugin;
+use PKP\core\JSONMessage;
+use PKP\submission\SubmissionFile;
+use PKP\db\DAORegistry;
+use PKP\submission\PKPSubmission;
+use PKP\core\PKPString;
+
+use APP\core\Services;
+use APP\notification\NotificationManager;
+
+// FIXME: Add namespacing
+use \Issue;
 
 abstract class PubIdPlugin extends PKPPubIdPlugin {
 
@@ -54,7 +64,7 @@ abstract class PubIdPlugin extends PKPPubIdPlugin {
 						$representationDao = Application::getRepresentationDAO();
 						$submissions = Services::get('submission')->getMany([
 							'contextId' => $context->getId(),
-							'status' => STATUS_PUBLISHED,
+							'status' => PKPSubmission::STATUS_PUBLISHED,
 							'count' => 5000, // large upper limit
 						]);
 						foreach ($submissions as $submission) {
@@ -97,7 +107,7 @@ abstract class PubIdPlugin extends PKPPubIdPlugin {
 	 */
 	function getPubObjectTypes() {
 		$pubObjectTypes = parent::getPubObjectTypes();
-		array_push($pubObjectTypes, 'Issue');
+		$pubObjectTypes['Issue'] = '\Issue'; // FIXME: Add namespacing
 		return $pubObjectTypes;
 	}
 
@@ -106,7 +116,7 @@ abstract class PubIdPlugin extends PKPPubIdPlugin {
 	 */
 	function checkDuplicate($pubId, $pubObjectType, $excludeId, $contextId) {
 		$issueDao = DAORegistry::getDAO('IssueDAO'); /* @var $issueDao IssueDAO */
-		foreach ($this->getPubObjectTypes() as $type) {
+		foreach ($this->getPubObjectTypes() as $type => $fqcn) {
 			if ($type === 'Issue') {
 				$excludeTypeId = $type === $pubObjectType ? $excludeId : null;
 				if ($issueDao->pubIdExists($type, $pubId, $excludeTypeId, $contextId)) {
@@ -160,7 +170,7 @@ abstract class PubIdPlugin extends PKPPubIdPlugin {
 		if (!$objectTypeEnabled) return null;
 
 		// Retrieve the issue.
-		if (!is_a($pubObject, 'Issue')) {
+		if (!$pubObject instanceof Issue) {
 			assert(!is_null($submission));
 			$issueDao = DAORegistry::getDAO('IssueDAO'); /* @var $issueDao IssueDAO */
 			$issue = $issueDao->getBySubmissionId($submission->getId(), $contextId);
@@ -310,3 +320,6 @@ abstract class PubIdPlugin extends PKPPubIdPlugin {
 	}
 }
 
+if (!PKP_STRICT_MODE) {
+    class_alias('\APP\plugins\PubIdPlugin', '\PubIdPlugin');
+}

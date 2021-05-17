@@ -13,22 +13,23 @@
  * @brief Helper class that encapsulates galley business logic
  */
 
-namespace APP\Services;
+namespace APP\services;
 
-use APP\core\Services;
-use APP\Services\QueryBuilders\GalleyQueryBuilder;
 use PKP\db\DAORegistry;
 use PKP\db\DAOResultFactory;
-use PKP\Services\interfaces\EntityPropertyInterface;
-use PKP\Services\interfaces\EntityReadInterface;
-
-use PKP\Services\interfaces\EntityWriteInterface;
+use PKP\services\interfaces\EntityPropertyInterface;
+use PKP\services\interfaces\EntityReadInterface;
+use PKP\validation\ValidatorFactory;
+use PKP\services\interfaces\EntityWriteInterface;
 use PKP\services\PKPSchemaService;
+
+use APP\core\Services;
+use APP\services\queryBuilders\GalleyQueryBuilder;
 
 class GalleyService implements EntityReadInterface, EntityWriteInterface, EntityPropertyInterface
 {
     /**
-     * @copydoc \PKP\Services\interfaces\EntityReadInterface::get()
+     * @copydoc \PKP\services\interfaces\EntityReadInterface::get()
      */
     public function get($galleyId)
     {
@@ -37,7 +38,7 @@ class GalleyService implements EntityReadInterface, EntityWriteInterface, Entity
     }
 
     /**
-     * @copydoc \PKP\Services\interfaces\EntityReadInterface::getCount()
+     * @copydoc \PKP\services\interfaces\EntityReadInterface::getCount()
      */
     public function getCount($args = [])
     {
@@ -45,7 +46,7 @@ class GalleyService implements EntityReadInterface, EntityWriteInterface, Entity
     }
 
     /**
-     * @copydoc \PKP\Services\interfaces\EntityReadInterface::getIds()
+     * @copydoc \PKP\services\interfaces\EntityReadInterface::getIds()
      */
     public function getIds($args = [])
     {
@@ -73,7 +74,7 @@ class GalleyService implements EntityReadInterface, EntityWriteInterface, Entity
     }
 
     /**
-     * @copydoc \PKP\Services\interfaces\EntityReadInterface::getMax()
+     * @copydoc \PKP\services\interfaces\EntityReadInterface::getMax()
      */
     public function getMax($args = [])
     {
@@ -83,7 +84,7 @@ class GalleyService implements EntityReadInterface, EntityWriteInterface, Entity
     }
 
     /**
-     * @copydoc \PKP\Services\interfaces\EntityReadInterface::getQueryBuilder()
+     * @copydoc \PKP\services\interfaces\EntityReadInterface::getQueryBuilder()
      *
      * @return GalleyQueryBuilder
      */
@@ -100,7 +101,7 @@ class GalleyService implements EntityReadInterface, EntityWriteInterface, Entity
     }
 
     /**
-     * @copydoc \PKP\Services\interfaces\EntityPropertyInterface::getProperties()
+     * @copydoc \PKP\services\interfaces\EntityPropertyInterface::getProperties()
      *
      * @param null|mixed $args
      */
@@ -183,7 +184,7 @@ class GalleyService implements EntityReadInterface, EntityWriteInterface, Entity
     }
 
     /**
-     * @copydoc \PKP\Services\interfaces\EntityPropertyInterface::getSummaryProperties()
+     * @copydoc \PKP\services\interfaces\EntityPropertyInterface::getSummaryProperties()
      *
      * @param null|mixed $args
      */
@@ -195,7 +196,7 @@ class GalleyService implements EntityReadInterface, EntityWriteInterface, Entity
     }
 
     /**
-     * @copydoc \PKP\Services\interfaces\EntityPropertyInterface::getFullProperties()
+     * @copydoc \PKP\services\interfaces\EntityPropertyInterface::getFullProperties()
      *
      * @param null|mixed $args
      */
@@ -207,14 +208,13 @@ class GalleyService implements EntityReadInterface, EntityWriteInterface, Entity
     }
 
     /**
-     * @copydoc \PKP\Services\EntityProperties\EntityWriteInterface::validate()
+     * @copydoc \PKP\services\entityProperties\EntityWriteInterface::validate()
      */
     public function validate($action, $props, $allowedLocales, $primaryLocale)
     {
         $schemaService = Services::get('schema');
 
-        import('lib.pkp.classes.validation.ValidatorFactory');
-        $validator = \ValidatorFactory::make(
+        $validator = ValidatorFactory::make(
             $props,
             $schemaService->getValidationRules(PKPSchemaService::SCHEMA_GALLEY, $allowedLocales),
             [
@@ -224,7 +224,7 @@ class GalleyService implements EntityReadInterface, EntityWriteInterface, Entity
         );
 
         // Check required fields
-        \ValidatorFactory::required(
+        ValidatorFactory::required(
             $validator,
             $action,
             $schemaService->getRequiredProps(PKPSchemaService::SCHEMA_GALLEY),
@@ -234,7 +234,7 @@ class GalleyService implements EntityReadInterface, EntityWriteInterface, Entity
         );
 
         // Check for input from disallowed locales
-        \ValidatorFactory::allowedLocales($validator, $schemaService->getMultilingualProps(PKPSchemaService::SCHEMA_GALLEY), $allowedLocales);
+        ValidatorFactory::allowedLocales($validator, $schemaService->getMultilingualProps(PKPSchemaService::SCHEMA_GALLEY), $allowedLocales);
 
         // The publicationId must match an existing publication that is not yet published
         $validator->after(function ($validator) use ($props) {
@@ -258,7 +258,7 @@ class GalleyService implements EntityReadInterface, EntityWriteInterface, Entity
     }
 
     /**
-     * @copydoc \PKP\Services\EntityProperties\EntityWriteInterface::add()
+     * @copydoc \PKP\services\entityProperties\EntityWriteInterface::add()
      */
     public function add($galley, $request)
     {
@@ -272,7 +272,7 @@ class GalleyService implements EntityReadInterface, EntityWriteInterface, Entity
     }
 
     /**
-     * @copydoc \PKP\Services\EntityProperties\EntityWriteInterface::edit()
+     * @copydoc \PKP\services\entityProperties\EntityWriteInterface::edit()
      */
     public function edit($galley, $params, $request)
     {
@@ -290,7 +290,7 @@ class GalleyService implements EntityReadInterface, EntityWriteInterface, Entity
     }
 
     /**
-     * @copydoc \PKP\Services\EntityProperties\EntityWriteInterface::delete()
+     * @copydoc \PKP\services\entityProperties\EntityWriteInterface::delete()
      */
     public function delete($galley)
     {

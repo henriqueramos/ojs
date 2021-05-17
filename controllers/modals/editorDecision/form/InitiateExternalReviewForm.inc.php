@@ -14,6 +14,13 @@
  *  review (skipping internal)
  */
 
+
+use PKP\submission\action\EditorAction;
+use PKP\submission\reviewRound\ReviewRound;
+
+use APP\workflow\EditorDecisionActionsManager;
+
+// FIXME: Add namespacing
 import('lib.pkp.classes.controllers.modals.editorDecision.form.EditorDecisionForm');
 
 class InitiateExternalReviewForm extends EditorDecisionForm
@@ -47,10 +54,8 @@ class InitiateExternalReviewForm extends EditorDecisionForm
         $submission = $this->getSubmission();
 
         // Record the decision.
-        import('classes.workflow.EditorDecisionActionsManager');
         $actionLabels = (new EditorDecisionActionsManager())->getActionLabels($request->getContext(), $submission, $this->getStageId(), [$this->_decision]);
 
-        import('lib.pkp.classes.submission.action.EditorAction');
         $editorAction = new EditorAction();
         $editorAction->recordDecision($request, $submission, $this->_decision, $actionLabels);
 
@@ -58,6 +63,6 @@ class InitiateExternalReviewForm extends EditorDecisionForm
         $editorAction->incrementWorkflowStage($submission, WORKFLOW_STAGE_ID_EXTERNAL_REVIEW, $request);
 
         // Create an initial internal review round.
-        $this->_initiateReviewRound($submission, WORKFLOW_STAGE_ID_EXTERNAL_REVIEW, $request, REVIEW_ROUND_STATUS_PENDING_REVIEWERS);
+        $this->_initiateReviewRound($submission, WORKFLOW_STAGE_ID_EXTERNAL_REVIEW, $request, ReviewRound::REVIEW_ROUND_STATUS_PENDING_REVIEWERS);
     }
 }

@@ -13,7 +13,9 @@
  * @brief Handle requests for issue management in publishing.
  */
 
-import('classes.handler.Handler');
+use APP\handler\Handler;
+
+use \APP\template\TemplateManager;
 
 class ManageIssuesHandler extends Handler
 {

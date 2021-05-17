@@ -15,6 +15,11 @@
 
 import('lib.pkp.plugins.importexport.native.filter.NativeImportFilter');
 
+use APP\file\IssueFileManager;
+
+// FIXME: Add namespacing
+// use Issue;
+
 class NativeXmlIssueGalleyFilter extends NativeImportFilter
 {
     /**
@@ -77,7 +82,7 @@ class NativeXmlIssueGalleyFilter extends NativeImportFilter
         $deployment = $this->getDeployment();
         $context = $deployment->getContext();
         $issue = $deployment->getIssue();
-        assert(is_a($issue, 'Issue'));
+        assert($issue instanceof Issue);
 
         // Create the data object
         $issueGalleyDao = DAORegistry::getDAO('IssueGalleyDAO'); /* @var $issueGalleyDao IssueGalleyDAO */
@@ -114,7 +119,6 @@ class NativeXmlIssueGalleyFilter extends NativeImportFilter
                     case 'date_uploaded': $issueFile->setDateUploaded($o->textContent); break;
                     case 'date_modified': $issueFile->setDateModified($o->textContent); break;
                     case 'embed':
-                        import('classes.file.IssueFileManager');
                         $issueFileManager = new IssueFileManager($issue->getId());
                         $filePath = $issueFileManager->getFilesDir() . $issueFileManager->contentTypeToPath($issueFile->getContentType()) . '/' . $issueFile->getServerFileName();
                         $issueFileManager->writeFile($filePath, base64_decode($o->textContent));

@@ -15,7 +15,6 @@
 
 import('lib.pkp.plugins.importexport.native.filter.NativeExportFilter');
 
-
 class DOAJXmlFilter extends NativeExportFilter
 {
     /**

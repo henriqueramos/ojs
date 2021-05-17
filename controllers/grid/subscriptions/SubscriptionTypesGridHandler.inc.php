@@ -13,13 +13,18 @@
  * @brief Handle subscription type grid requests.
  */
 
-import('lib.pkp.classes.controllers.grid.GridHandler');
-
 import('controllers.grid.subscriptions.SubscriptionTypesGridCellProvider');
 import('controllers.grid.subscriptions.SubscriptionTypesGridRow');
 import('controllers.grid.subscriptions.SubscriptionTypeForm');
 
+use PKP\linkAction\LinkAction;
+use PKP\linkAction\request\AjaxModal;
 use PKP\core\JSONMessage;
+use PKP\notification\PKPNotification;
+use PKP\controllers\grid\GridHandler;
+use PKP\controllers\grid\GridColumn;
+
+use APP\notification\NotificationManager;
 
 class SubscriptionTypesGridHandler extends GridHandler
 {
@@ -71,7 +76,6 @@ class SubscriptionTypesGridHandler extends GridHandler
         // Grid actions.
         $router = $request->getRouter();
 
-        import('lib.pkp.classes.linkAction.request.AjaxModal');
         $this->addAction(
             new LinkAction(
                 'addSubscriptionType',
@@ -215,7 +219,7 @@ class SubscriptionTypesGridHandler extends GridHandler
         if ($subscriptionTypeForm->validate()) {
             $subscriptionTypeForm->execute();
             $notificationManager = new NotificationManager();
-            $notificationManager->createTrivialNotification($request->getUser()->getId(), NOTIFICATION_TYPE_SUCCESS);
+            $notificationManager->createTrivialNotification($request->getUser()->getId(), PKPNotification::NOTIFICATION_TYPE_SUCCESS);
             // Prepare the grid row data.
             return DAO::getDataChangedEvent($subscriptionTypeId);
         } else {

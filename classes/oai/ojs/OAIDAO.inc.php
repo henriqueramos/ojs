@@ -15,8 +15,12 @@
  * @brief DAO operations for the OJS OAI interface.
  */
 
-import('lib.pkp.classes.oai.PKPOAIDAO');
+use PKP\submission\PKPSubmission;
+use PKP\oai\PKPOAIDAO;
+
+// FIXME: use namespaces
 import('classes.issue.Issue');
+
 use Illuminate\Support\Facades\DB;
 
 class OAIDAO extends PKPOAIDAO
@@ -163,7 +167,7 @@ class OAIDAO extends PKPOAIDAO
      */
     public function getSetJournalSectionId($journalSpec, $sectionSpec, $restrictJournalId = null)
     {
-        $journal = & $this->journalDao->getByPath($journalSpec);
+        $journal = $this->journalDao->getByPath($journalSpec);
         if (!isset($journal) || (isset($restrictJournalId) && $journal->getId() != $restrictJournalId)) {
             return [0, 0];
         }
@@ -243,7 +247,7 @@ class OAIDAO extends PKPOAIDAO
             ->pluck('journal_id')
             ->all();
 
-        $params = [(int) STATUS_PUBLISHED];
+        $params = [(int) PKPSubmission::STATUS_PUBLISHED];
         if (isset($journalId)) {
             $params[] = (int) $journalId;
         }

@@ -13,9 +13,15 @@
  * @brief Class to perform automated email notifications when an issue becomes open access.
  */
 
-import('lib.pkp.classes.scheduledTask.ScheduledTask');
+namespace APP\tasks;
 
-use \PKP\mail\MailTemplate;
+use PKP\scheduledTask\ScheduledTask;
+use PKP\mail\MailTemplate;
+use PKP\db\DAORegistry;
+
+use APP\template\TemplateManager;
+use APP\core\Application;
+use APP\core\Services;
 
 class OpenAccessNotification extends ScheduledTask
 {
@@ -175,4 +181,8 @@ class OpenAccessNotification extends ScheduledTask
         }
         return true;
     }
+}
+
+if (!PKP_STRICT_MODE) {
+    class_alias('\APP\tasks\OpenAccessNotification', '\OpenAccessNotification');
 }
