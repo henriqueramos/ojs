@@ -16,9 +16,10 @@
 
 namespace APP\services;
 
-use PKP\submission\PKPSubmission;
 use PKP\db\DAORegistry;
+use PKP\plugins\HookRegistry;
 use PKP\services\PKPSubmissionService;
+use PKP\submission\PKPSubmission;
 
 use APP\submission\Submission;
 use APP\core\Services;
@@ -31,10 +32,10 @@ class SubmissionService extends PKPSubmissionService
      */
     public function __construct()
     {
-        \HookRegistry::register('API::submissions::params', [$this, 'modifyAPISubmissionsParams']);
-        \HookRegistry::register('Submission::getMany::queryBuilder', [$this, 'modifySubmissionQueryBuilder']);
-        \HookRegistry::register('Submission::getMany::queryObject', [$this, 'modifySubmissionListQueryObject']);
-        \HookRegistry::register('Submission::getProperties::values', [$this, 'modifyPropertyValues']);
+        HookRegistry::register('API::submissions::params', [$this, 'modifyAPISubmissionsParams']);
+        HookRegistry::register('Submission::getMany::queryBuilder', [$this, 'modifySubmissionQueryBuilder']);
+        HookRegistry::register('Submission::getMany::queryObject', [$this, 'modifySubmissionListQueryObject']);
+        HookRegistry::register('Submission::getProperties::values', [$this, 'modifyPropertyValues']);
     }
 
     /**
