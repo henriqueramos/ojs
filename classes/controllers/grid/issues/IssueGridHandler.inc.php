@@ -24,6 +24,7 @@ use PKP\core\JSONMessage;
 use PKP\submission\PKPSubmission;
 use PKP\file\TemporaryFileManager;
 use PKP\security\authorization\ContextAccessPolicy;
+use PKP\security\Role;
 
 use APP\security\authorization\OjsIssueRequiredPolicy;
 use APP\template\TemplateManager;
@@ -41,7 +42,7 @@ class IssueGridHandler extends GridHandler
     {
         parent::__construct();
         $this->addRoleAssignment(
-            [ROLE_ID_MANAGER],
+            [Role::ROLE_ID_MANAGER],
             [
                 'fetchGrid', 'fetchRow',
                 'addIssue', 'editIssue', 'editIssueData', 'updateIssue',
@@ -535,7 +536,7 @@ class IssueGridHandler extends GridHandler
 
         // If subscriptions with delayed open access are enabled then
         // update open access date according to open access delay policy
-        if ($context->getData('publishingMode') == PUBLISHING_MODE_SUBSCRIPTION && ($delayDuration = $context->getData('delayedOpenAccessDuration'))) {
+        if ($context->getData('publishingMode') == \APP\journal\Journal::PUBLISHING_MODE_SUBSCRIPTION && ($delayDuration = $context->getData('delayedOpenAccessDuration'))) {
             $delayYears = (int)floor($delayDuration / 12);
             $delayMonths = (int)fmod($delayDuration, 12);
 
@@ -546,7 +547,7 @@ class IssueGridHandler extends GridHandler
             $delayOpenAccessYear = $curYear + $delayYears + (int)floor(($curMonth + $delayMonths) / 12);
             $delayOpenAccessMonth = (int)fmod($curMonth + $delayMonths, 12);
 
-            $issue->setAccessStatus(ISSUE_ACCESS_SUBSCRIPTION);
+            $issue->setAccessStatus(\APP\issue\Issue::ISSUE_ACCESS_SUBSCRIPTION);
             $issue->setOpenAccessDate(date('Y-m-d H:i:s', mktime(0, 0, 0, $delayOpenAccessMonth, $curDay, $delayOpenAccessYear)));
         }
 
@@ -575,7 +576,7 @@ class IssueGridHandler extends GridHandler
         }
 
         // Send a notification to associated users if selected and context is publishing content online with OJS
-        if ($request->getUserVar('sendIssueNotification') && $context->getData('publishingMode') != PUBLISHING_MODE_NONE) {
+        if ($request->getUserVar('sendIssueNotification') && $context->getData('publishingMode') != \APP\journal\Journal::PUBLISHING_MODE_NONE) {
             $notificationManager = new NotificationManager();
             $notificationUsers = [];
             $userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */

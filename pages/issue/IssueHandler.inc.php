@@ -13,10 +13,9 @@
  * @brief Handle requests for issue functions.
  */
 
-import('classes.issue.IssueAction');
-
 use PKP\submission\PKPSubmission;
 use PKP\security\authorization\ContextRequiredPolicy;
+use PKP\db\DAORegistry;
 
 use APP\security\authorization\OjsJournalMustPublishPolicy;
 use APP\security\authorization\OjsIssueRequiredPolicy;
@@ -24,6 +23,10 @@ use APP\handler\Handler;
 use APP\template\TemplateManager;
 use APP\file\IssueFileManager;
 use APP\payment\ojs\OJSPaymentManager;
+use APP\i18n\AppLocale;
+use APP\core\Services;
+use APP\core\Application;
+use APP\issue\IssueAction;
 
 class IssueHandler extends Handler
 {
@@ -216,7 +219,6 @@ class IssueHandler extends Handler
      */
     public function userCanViewGalley($request)
     {
-        import('classes.issue.IssueAction');
         $issueAction = new IssueAction();
 
         $journal = $request->getJournal();
@@ -372,7 +374,6 @@ class IssueHandler extends Handler
         ]);
 
         // Subscription Access
-        import('classes.issue.IssueAction');
         $issueAction = new IssueAction();
         $subscriptionRequired = $issueAction->subscriptionRequired($issue, $journal);
         $subscribedUser = $issueAction->subscribedUser($user, $journal);
@@ -403,7 +404,7 @@ class IssueHandler extends Handler
         $completedPaymentDao = DAORegistry::getDAO('OJSCompletedPaymentDAO'); /* @var $completedPaymentDao OJSCompletedPaymentDAO */
         $templateMgr->assign([
             'hasAccess' => !$subscriptionRequired ||
-                $issue->getAccessStatus() == ISSUE_ACCESS_OPEN ||
+                $issue->getAccessStatus() == \APP\issue\Issue::ISSUE_ACCESS_OPEN ||
                 $subscribedUser || $subscribedDomain ||
                 ($user && $completedPaymentDao->hasPaidPurchaseIssue($user->getId(), $issue->getId()))
         ]);

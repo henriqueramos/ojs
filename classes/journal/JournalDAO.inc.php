@@ -18,11 +18,7 @@
 namespace APP\journal;
 
 use PKP\context\ContextDAO;
-
-import('lib.pkp.classes.metadata.MetadataTypeDescription');
-
-define('JOURNAL_FIELD_TITLE', 1);
-define('JOURNAL_FIELD_SEQUENCE', 2);
+use PKP\metadata\MetadataTypeDescription;
 
 class JournalDAO extends ContextDAO
 {
@@ -111,7 +107,7 @@ class JournalDAO extends ContextDAO
         $journalId,
         $pubIdType,
         $pubId,
-        $assocType = ASSOC_TYPE_ANY,
+        $assocType = MetadataTypeDescription::ASSOC_TYPE_ANY,
         $assocId = 0,
         $forSameType = false
     ) {

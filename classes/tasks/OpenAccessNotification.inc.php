@@ -90,7 +90,7 @@ class OpenAccessNotification extends ScheduledTask
     public function sendNotifications($journal, $curDate)
     {
         // Only send notifications if subscriptions and open access notifications are enabled
-        if ($journal->getData('publishingMode') == PUBLISHING_MODE_SUBSCRIPTION && $journal->getData('enableOpenAccessNotification')) {
+        if ($journal->getData('publishingMode') == \APP\journal\Journal::PUBLISHING_MODE_SUBSCRIPTION && $journal->getData('enableOpenAccessNotification')) {
             $curYear = $curDate['year'];
             $curMonth = $curDate['month'];
             $curDay = $curDate['day'];
@@ -103,7 +103,7 @@ class OpenAccessNotification extends ScheduledTask
                 $accessStatus = $issue->getAccessStatus();
                 $openAccessDate = $issue->getOpenAccessDate();
 
-                if ($accessStatus == ISSUE_ACCESS_SUBSCRIPTION && !empty($openAccessDate) && strtotime($openAccessDate) == mktime(0, 0, 0, $curMonth, $curDay, $curYear)) {
+                if ($accessStatus == \APP\issue\Issue::ISSUE_ACCESS_SUBSCRIPTION && !empty($openAccessDate) && strtotime($openAccessDate) == mktime(0, 0, 0, $curMonth, $curDay, $curYear)) {
                     // Notify all users who have open access notification set for this journal
                     $userSettingsDao = DAORegistry::getDAO('UserSettingsDAO'); /* @var $userSettingsDao UserSettingsDAO */
                     $users = $userSettingsDao->getUsersBySetting('openAccessNotification', true, 'bool', $journal->getId());

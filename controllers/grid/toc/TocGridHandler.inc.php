@@ -22,6 +22,7 @@ use PKP\submission\PKPSubmission;
 use PKP\security\authorization\ContextAccessPolicy;
 use PKP\controllers\grid\feature\OrderCategoryGridItemsFeature;
 use PKP\controllers\grid\GridColumn;
+use PKP\security\Role;
 
 use APP\security\authorization\OjsIssueRequiredPolicy;
 use APP\submission\Submission;
@@ -37,7 +38,7 @@ class TocGridHandler extends CategoryGridHandler
     {
         parent::__construct();
         $this->addRoleAssignment(
-            [ROLE_ID_MANAGER],
+            [Role::ROLE_ID_MANAGER],
             ['fetchGrid', 'fetchCategory', 'fetchRow', 'saveSequence', 'removeArticle', 'setAccessStatus']
         );
         $this->submissionsBySectionId = [];
@@ -88,7 +89,7 @@ class TocGridHandler extends CategoryGridHandler
         );
 
         $issue = $this->getAuthorizedContextObject(ASSOC_TYPE_ISSUE);
-        if ($request->getJournal()->getData('publishingMode') == PUBLISHING_MODE_SUBSCRIPTION && $issue->getAccessStatus() == ISSUE_ACCESS_SUBSCRIPTION) {
+        if ($request->getJournal()->getData('publishingMode') == \APP\journal\Journal::PUBLISHING_MODE_SUBSCRIPTION && $issue->getAccessStatus() == \APP\issue\Issue::ISSUE_ACCESS_SUBSCRIPTION) {
             // Article access status
             $this->addColumn(
                 new GridColumn(

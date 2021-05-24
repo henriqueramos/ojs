@@ -21,6 +21,7 @@ use PKP\plugins\HookRegistry;
 use PKP\services\PKPSubmissionService;
 use PKP\submission\PKPSubmission;
 
+use APP\article\ArticleTombstoneManager;
 use APP\core\Application;
 use APP\core\Services;
 use APP\submission\Submission;
@@ -58,8 +59,7 @@ class SubmissionService extends PKPSubmissionService
             } else {
                 $context = Services::get('context')->get($submission->getData('contextId'));
             }
-            import('classes.article.ArticleTombstoneManager');
-            $articleTombstoneManager = new \ArticleTombstoneManager();
+            $articleTombstoneManager = new ArticleTombstoneManager();
             $articleTombstoneManager->insertArticleTombstone($submission, $context);
         }
 
@@ -169,7 +169,7 @@ class SubmissionService extends PKPSubmissionService
                 case 'urlPublished':
                     $values[$prop] = $dispatcher->url(
                         $request,
-                        \PKPApplication::ROUTE_PAGE,
+                        \PKP\core\PKPApplication::ROUTE_PAGE,
                         $context->getPath(),
                         'article',
                         'view',

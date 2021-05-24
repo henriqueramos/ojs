@@ -230,13 +230,13 @@ class IssueForm extends Form
         } else {
             $issue = $issueDao->newDataObject();
             switch ($journal->getData('publishingMode')) {
-                case PUBLISHING_MODE_SUBSCRIPTION:
-                case PUBLISHING_MODE_NONE:
-                    $issue->setAccessStatus(ISSUE_ACCESS_SUBSCRIPTION);
+                case \APP\journal\Journal::PUBLISHING_MODE_SUBSCRIPTION:
+                case \APP\journal\Journal::PUBLISHING_MODE_NONE:
+                    $issue->setAccessStatus(\APP\issue\Issue::ISSUE_ACCESS_SUBSCRIPTION);
                     break;
-                case PUBLISHING_MODE_OPEN:
+                case \APP\journal\Journal::PUBLISHING_MODE_OPEN:
                 default:
-                    $issue->setAccessStatus(ISSUE_ACCESS_OPEN);
+                    $issue->setAccessStatus(\APP\issue\Issue::ISSUE_ACCESS_OPEN);
                     break;
             }
             $isNewIssue = true;

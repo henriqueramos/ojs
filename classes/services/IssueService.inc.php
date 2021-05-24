@@ -25,6 +25,7 @@ use PKP\services\PKPSchemaService;
 use APP\core\Services;
 use APP\journal\Journal;
 use APP\services\queryBuilders\IssueQueryBuilder;
+use APP\issue\Issue;
 
 class IssueService implements EntityPropertyInterface, EntityReadInterface
 {
@@ -118,7 +119,7 @@ class IssueService implements EntityPropertyInterface, EntityReadInterface
     public function getQueryBuilder($args = [])
     {
         $defaultArgs = [
-            'contextId' => CONTEXT_ID_NONE,
+            'contextId' => \PKP\core\PKPApplication::CONTEXT_ID_NONE,
             'orderBy' => 'datePublished',
             'orderDirection' => 'DESC',
             'isPublished' => null,
@@ -168,7 +169,7 @@ class IssueService implements EntityPropertyInterface, EntityReadInterface
         $subscribedUser = $issueAction->subscribedUser($journal, $issue);
         $subscribedDomain = $issueAction->subscribedDomain($journal, $issue);
 
-        return !$subscriptionRequired || $issue->getAccessStatus() == ISSUE_ACCESS_OPEN || $subscribedUser || $subscribedDomain;
+        return !$subscriptionRequired || $issue->getAccessStatus() == Issue::ISSUE_ACCESS_OPEN || $subscribedUser || $subscribedDomain;
     }
 
     /**
@@ -184,13 +185,13 @@ class IssueService implements EntityPropertyInterface, EntityReadInterface
         $accessStatus = null;
 
         switch ($journal->getData('publishingMode')) {
-            case PUBLISHING_MODE_SUBSCRIPTION:
-            case PUBLISHING_MODE_NONE:
-                $accessStatus = ISSUE_ACCESS_SUBSCRIPTION;
+            case \APP\journal\Journal::PUBLISHING_MODE_SUBSCRIPTION:
+            case \APP\journal\Journal::PUBLISHING_MODE_NONE:
+                $accessStatus = Issue::ISSUE_ACCESS_SUBSCRIPTION;
                 break;
-            case PUBLISHING_MODE_OPEN:
+            case \APP\journal\Journal::PUBLISHING_MODE_OPEN:
             default:
-                $accessStatus = ISSUE_ACCESS_OPEN;
+                $accessStatus = Issue::ISSUE_ACCESS_OPEN;
                 break;
         }
 

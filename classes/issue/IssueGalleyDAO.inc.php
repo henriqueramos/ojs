@@ -15,9 +15,12 @@
  * @brief Operations for retrieving and modifying IssueGalley objects.
  */
 
-import('classes.issue.IssueGalley');
+namespace APP\issue;
 
-use \APP\file\IssueFileManager;
+use PKP\plugins\HookRegistry;
+
+use APP\issue\IssueGalley;
+use APP\file\IssueFileManager;
 
 class IssueGalleyDAO extends \PKP\db\DAO
 {
@@ -439,4 +442,8 @@ class IssueGalleyDAO extends \PKP\db\DAO
     {
         return $this->_getInsertId('issue_galleys', 'galley_id');
     }
+}
+
+if (!PKP_STRICT_MODE) {
+    class_alias('\APP\issue\IssueGalleyDAO', '\IssueGalleyDAO');
 }
