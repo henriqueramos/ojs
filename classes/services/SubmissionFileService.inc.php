@@ -19,8 +19,6 @@ use PKP\db\DAORegistry;
 use PKP\observers\events\DeleteSubmissionFile;
 use PKP\plugins\HookRegistry;
 
-use APP\core\Application;
-
 class SubmissionFileService extends \PKP\services\PKPSubmissionFileService
 {
     /**
