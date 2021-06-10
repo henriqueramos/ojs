@@ -16,7 +16,7 @@
 namespace APP\services;
 
 use PKP\db\DAORegistry;
-use PKP\observers\events\DeleteSubmissionFile;
+use PKP\observers\events\SubmissionFileDeleted;
 use PKP\plugins\HookRegistry;
 
 class SubmissionFileService extends \PKP\services\PKPSubmissionFileService
@@ -52,7 +52,7 @@ class SubmissionFileService extends \PKP\services\PKPSubmissionFileService
                 $galleyDao->updateObject($galley);
             }
 
-            event(new DeleteSubmissionFile($submissionFile));
+            event(new SubmissionFileDeleted($submissionFile));
         }
     }
 }
