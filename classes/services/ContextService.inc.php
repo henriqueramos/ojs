@@ -15,15 +15,16 @@
 
 namespace APP\services;
 
-use PKP\file\TemporaryFileManager;
-use PKP\db\DAORegistry;
-use PKP\config\Config;
-use PKP\plugins\HookRegistry;
+use APP\article\ArticleTombstoneManager;
+use APP\core\Application;
+use APP\core\Services;
+use APP\facades\Repo;
 
 use APP\file\PublicFileManager;
-use APP\core\Services;
-use APP\core\Application;
-use APP\article\ArticleTombstoneManager;
+use PKP\config\Config;
+use PKP\db\DAORegistry;
+use PKP\file\TemporaryFileManager;
+use PKP\plugins\HookRegistry;
 
 class ContextService extends \PKP\services\PKPContextService
 {
@@ -175,8 +176,7 @@ class ContextService extends \PKP\services\PKPContextService
         $subscriptionTypeDao = DAORegistry::getDAO('SubscriptionTypeDAO');
         $subscriptionTypeDao->deleteByJournal($context->getId());
 
-        $submissionDao = DAORegistry::getDAO('SubmissionDAO');
-        $submissionDao->deleteByContextId($context->getId());
+        Repo::submission()->deleteByContextId($context->getId());
 
         $publicFileManager = new PublicFileManager();
         $publicFileManager->rmtree($publicFileManager->getContextFilesPath($context->getId()));

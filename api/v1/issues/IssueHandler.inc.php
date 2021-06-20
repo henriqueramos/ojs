@@ -14,14 +14,16 @@
  *
  */
 
-use PKP\handler\APIHandler;
-use PKP\security\authorization\ContextRequiredPolicy;
-use PKP\security\authorization\ContextAccessPolicy;
-use PKP\security\Role;
-
+use APP\core\Services;
 use APP\security\authorization\OjsIssueRequiredPolicy;
 use APP\security\authorization\OjsJournalMustPublishPolicy;
-use APP\core\Services;
+use PKP\db\DAORegistry;
+
+use PKP\handler\APIHandler;
+use PKP\security\authorization\ContextAccessPolicy;
+use PKP\security\authorization\ContextRequiredPolicy;
+
+use PKP\security\Role;
 
 class IssueHandler extends APIHandler
 {
@@ -207,16 +209,20 @@ class IssueHandler extends APIHandler
         $request = $this->getRequest();
         $context = $request->getContext();
 
-        $issueDao = DAORegistry::getDAO('IssueDAO'); /* @var $issueDao IssueDAO */
+        $issueDao = DAORegistry::getDAO('IssueDAO'); /** @var IssueDAO $issueDao */
         $issue = $issueDao->getCurrent($context->getId());
 
         if (!$issue) {
             return $response->withStatus(404)->withJsonError('api.404.resourceNotFound');
         }
 
+        $userGroupDao = DAORegistry::getDAO('UserGroupDao'); /** @var UserGroupDAO $userGroupDao */
+        $userGroups = $userGroupDao->getByContextId($context->getId());
+
         $data = Services::get('issue')->getFullProperties($issue, [
             'request' => $request,
             'slimRequest' => $slimRequest,
+            'userGroups' => $userGroups,
         ]);
 
         return $response->withJson($data, 200);
@@ -240,9 +246,13 @@ class IssueHandler extends APIHandler
             return $response->withStatus(404)->withJsonError('api.404.resourceNotFound');
         }
 
+        $userGroupDao = DAORegistry::getDAO('UserGroupDao'); /** @var UserGroupDAO $userGroupDao */
+        $userGroups = $userGroupDao->getByContextId($context->getId());
+
         $data = Services::get('issue')->getFullProperties($issue, [
             'request' => $request,
             'slimRequest' => $slimRequest,
+            'userGroups' => $userGroups,
         ]);
 
         return $response->withJson($data, 200);

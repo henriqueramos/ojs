@@ -16,21 +16,19 @@
  * @class Submission
  * @ingroup submission
  *
- * @see SubmissionDAO
+ * @see DAO
  *
  * @brief Article class.
  */
 
 namespace APP\submission;
 
-
-
-use PKP\submission\PKPSubmission;
-use PKP\db\DAORegistry;
-
 use APP\core\Application;
 use APP\core\Services;
+
 use APP\i18n\AppLocale;
+use PKP\db\DAORegistry;
+use PKP\submission\PKPSubmission;
 
 class Submission extends PKPSubmission
 {
@@ -341,4 +339,3 @@ if (!PKP_STRICT_MODE) {
         define($constantName, constant('\Submission::' . $constantName));
     }
 }
-

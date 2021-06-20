@@ -15,14 +15,17 @@
 
 namespace APP\services;
 
+use APP\core\Application;
+
 use PKP\db\DAORegistry;
 use PKP\observers\events\SubmissionFileDeleted;
 use PKP\plugins\HookRegistry;
+use PKP\search\SubmissionSearch;
 
 class SubmissionFileService extends \PKP\services\PKPSubmissionFileService
 {
     /**
-     * Initialize hooks for extending PKPSubmissionService
+     * Initialize hooks for extending PKPSubmissionFileService
      */
     public function __construct()
     {
