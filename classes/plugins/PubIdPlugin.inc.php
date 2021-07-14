@@ -16,7 +16,6 @@
 namespace APP\plugins;
 
 use APP\core\Application;
-use APP\core\Services;
 use APP\facades\Repo;
 use APP\issue\Issue;
 use APP\notification\NotificationManager;
@@ -26,6 +25,7 @@ use PKP\core\JSONMessage;
 
 use PKP\core\PKPString;
 use PKP\db\DAORegistry;
+use PKP\submissionFile\SubmissionFile;
 
 // FIXME: Add namespacing
 
@@ -304,7 +304,7 @@ abstract class PubIdPlugin extends \PKP\plugins\PKPPubIdPlugin
                 ->filterByContextIds([$issue->getJournalId()])
                 ->filterByIssueIds([$issue->getId()])
         );
-        $submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
+
         foreach ($submissionIds as $submissionId) {
             $submission = Repo::submission()->get($submissionId);
             if ($submissionPubIdEnabled) { // Does this option have to be enabled here for?
@@ -320,13 +320,17 @@ abstract class PubIdPlugin extends \PKP\plugins\PKPPubIdPlugin
                             Application::getRepresentationDAO()->deletePubId($representation->getId(), $pubIdType);
                         }
                         if ($filePubIdEnabled) { // Does this option have to be enabled here for?
-                            $articleProofFileIds = Services::get('submissionFile')->getIds([
-                                'assocTypes' => [ASSOC_TYPE_REPRESENTATION],
-                                'assocIds' => [$representation->getId()],
-                                'fileStages' => [SubmissionFile::SUBMISSION_FILE_PROOF],
-                            ]);
+                            $collector = Repo::submissionFiles()
+                                ->getCollector()
+                                ->filterByAssoc(
+                                    [ASSOC_TYPE_REPRESENTATION],
+                                    [$representation->getId()]
+                                )->filterByFileStages([SubmissionFile::SUBMISSION_FILE_PROOF]);
+
+                            $articleProofFileIds = Repo::submissionFiles()
+                                ->getIds($collector);
                             foreach ($articleProofFileIds as $articleProofFileId) {
-                                $submissionFileDao->deletePubId($articleProofFileId, $pubIdType);
+                                Repo::submissionFiles()->dao->deletePubId($articleProofFileId, $pubIdType);
                             }
                         }
                     }

@@ -32,7 +32,7 @@ use PKP\file\FileManager;
 use PKP\identity\Identity;
 use PKP\install\Installer;
 use PKP\security\Role;
-use PKP\submission\SubmissionFile;
+use PKP\submissionFile\SubmissionFile;
 
 class Upgrade extends Installer
 {
@@ -97,7 +97,6 @@ class Upgrade extends Installer
     {
         $journalDao = DAORegistry::getDAO('JournalDAO'); /* @var $journalDao JournalDAO */
         $userGroupDao = DAORegistry::getDAO('UserGroupDAO'); /* @var $userGroupDao UserGroupDAO */
-        $submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
         $journalIterator = $journalDao->getAll();
         while ($journal = $journalIterator->next()) {
             $managerUserGroup = $userGroupDao->getDefaultByRoleId($journal->getId(), Role::ROLE_ID_MANAGER);
@@ -106,14 +105,14 @@ class Upgrade extends Installer
             switch (Config::getVar('database', 'driver')) {
                 case 'mysql':
                 case 'mysqli':
-                    $submissionFileDao->update('UPDATE submission_files sf, submissions s SET sf.uploader_user_id = ? WHERE sf.uploader_user_id IS NULL AND sf.submission_id = s.submission_id AND s.context_id = ?', [$creatorUserId, $journal->getId()]);
+                    DB::statement('UPDATE submission_files sf, submissions s SET sf.uploader_user_id = ? WHERE sf.uploader_user_id IS NULL AND sf.submission_id = s.submission_id AND s.context_id = ?', [$creatorUserId, $journal->getId()]);
                     break;
                 case 'postgres':
                 case 'postgres64':
                 case 'postgres7':
                 case 'postgres8':
                 case 'postgres9':
-                    $submissionFileDao->update('UPDATE submission_files SET uploader_user_id = ? FROM submissions s WHERE submission_files.uploader_user_id IS NULL AND submission_files.submission_id = s.submission_id AND s.context_id = ?', [$creatorUserId, $journal->getId()]);
+                    DB::statement('UPDATE submission_files SET uploader_user_id = ? FROM submissions s WHERE submission_files.uploader_user_id IS NULL AND submission_files.submission_id = s.submission_id AND s.context_id = ?', [$creatorUserId, $journal->getId()]);
                     break;
                 default: fatalError('Unknown database type!');
             }
@@ -130,29 +129,41 @@ class Upgrade extends Installer
     public function setFileName()
     {
         $journalDao = DAORegistry::getDAO('JournalDAO'); /* @var $journalDao JournalDAO */
-        $submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
 
         $contexts = $journalDao->getAll();
         while ($context = $contexts->next()) {
             $collector = Repo::submission()->getCollector()->filterByContextIds([$context->getId()]);
             $submissionIds = Repo::submission()->getIds($collector);
             foreach ($submissionIds as $submissionId) {
-                $submissionFilesIterator = Services::get('submissionFile')->getMany([
-                    'submissionIds' => [$submissionId],
-                    'includeDependentFiles' => true,
-                ]);
+                $submissionFileCollector = Repo::submissionFiles()
+                    ->getCollector()
+                    ->filterBySubmissionIds([$submissionId])
+                    ->filterByIncludeDependentFiles(true);
+
+                $submissionFilesIterator = Repo::submissionFiles()
+                    ->getMany($submissionFileCollector);
+
                 foreach ($submissionFilesIterator as $submissionFile) {
-                    $reviewStage = $submissionFile->getFileStage() == SubmissionFile::SUBMISSION_FILE_REVIEW_FILE ||
-                        $submissionFile->getFileStage() == SubmissionFile::SUBMISSION_FILE_REVIEW_ATTACHMENT ||
-                        $submissionFile->getFileStage() == SubmissionFile::SUBMISSION_FILE_REVIEW_REVISION;
-                    if (!$submissionFile->getName(AppLocale::getPrimaryLocale())) {
-                        if ($reviewStage) {
-                            $submissionFile->setName($submissionFile->_generateName(true), AppLocale::getPrimaryLocale());
-                        } else {
-                            $submissionFile->setName($submissionFile->_generateName(), AppLocale::getPrimaryLocale());
-                        }
+                    if ($submissionFile->getName(AppLocale::getPrimaryLocale())) {
+                        continue;
                     }
-                    $submissionFileDao->updateObject($submissionFile);
+
+                    $itsOnReviewStage = (bool) (
+                        $submissionFile->itsOnReviewFileStage() ||
+                        $submissionFile->itsOnReviewAttachmentStage() ||
+                        $submissionFile->itsOnReviewRevisionStage()
+                    );
+
+                    $data = [
+                        'name' => [
+                            AppLocale::getPrimaryLocale() => $submissionFile->_generateName($itsOnReviewStage),
+                        ]
+                    ];
+
+                    Repo::submissionFiles()->edit(
+                        $submissionFile,
+                        $data
+                    );
                 }
             }
         }
@@ -443,7 +454,10 @@ class Upgrade extends Installer
             ->whereNotNull('ra.reviewer_file_id')
             ->get();
         foreach ($fileRows as $fileRow) {
-            $submissionDir = Services::get('submissionFile')->getSubmissionDir($fileRow->context_id, $fileRow->submission_id);
+            $submissionDir = Repo::submissionFiles()->getSubmissionDir(
+                $fileRow->context_id,
+                $fileRow->submission_id
+            );
             $revisionRows = DB::table('submission_files')
                 ->where('file_id', '=', $fileRow->reviewer_file_id)
                 ->get();
@@ -516,27 +530,35 @@ class Upgrade extends Installer
     public function repairImageAssociations()
     {
         $genreDao = DAORegistry::getDAO('GenreDAO'); /* @var $genreDao GenreDAO */
-        $deprecatedDao = Repo::submission()->dao->deprecatedDao;
-        $submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
-        $result = $submissionFileDao->retrieve('SELECT df.file_id AS dependent_file_id, gf.file_id AS galley_file_id FROM submission_files df, submission_files gf, submission_html_galley_images i, submission_galleys g WHERE i.galley_id = g.galley_id AND g.file_id = gf.file_id AND i.file_id = df.file_id');
+        $result = DB::select('SELECT df.file_id AS dependent_file_id, gf.file_id AS galley_file_id FROM submission_files df, submission_files gf, submission_html_galley_images i, submission_galleys g WHERE i.galley_id = g.galley_id AND g.file_id = gf.file_id AND i.file_id = df.file_id');
         foreach ($result as $row) {
-            $submissionFiles = $submissionFileDao->getAllRevisions($row->dependent_file_id);
-            foreach ((array) $submissionFiles as $submissionFile) {
-                if ($submissionFile->getFileStage() != 1) {
+            // Couldn't find getAllRevisions - @to-do
+            $submissionFiles = (array) $submissionFileDao->getAllRevisions($row->dependent_file_id);
+            foreach ($submissionFiles as $submissionFile) {
+                if ($submissionFile->getFileStage() != SubmissionFile::SUBMISSION_FILE_PUBLIC) {
                     continue;
-                } // SUBMISSION_FILE_PUBLIC
+                }
 
-                $submission = Repo::submission()->get($submissionFile->getData('submissionId'));
+                $submission = Repo::submission()
+                    ->get($submissionFile->getData('submissionId'));
                 $imageGenre = $genreDao->getByKey('IMAGE', $submission->getContextId());
 
-                $submissionFile->setFileStage(SubmissionFile::SUBMISSION_FILE_DEPENDENT);
-                $submissionFile->setAssocType(ASSOC_TYPE_SUBMISSION_FILE);
-                $submissionFile->setAssocId($row->galley_file_id);
-                $submissionFile->setGenreId($imageGenre->getId());
-                $submissionFileDao->updateObject($submissionFile);
+                $data = [
+                    'fileStage' => SubmissionFile::SUBMISSION_FILE_DEPENDENT,
+                    'assocType' => ASSOC_TYPE_SUBMISSION_FILE,
+                    'assocId' => $row->galley_file_id,
+                    'genreId' => $imageGenre->getId(),
+                ];
+
+                Repo::submissionFiles()
+                    ->edit(
+                        $submissionFile,
+                        $data
+                    );
             }
         }
-        $deprecatedDao->update('DROP TABLE submission_html_galley_images');
+        DB::statement('DROP TABLE submission_html_galley_images');
+
         return true;
     }
 
@@ -552,7 +574,6 @@ class Upgrade extends Installer
         $installedLocales = $site->getInstalledLocales();
         $submissionSubjectDao = DAORegistry::getDAO('SubmissionSubjectDAO'); /* @var $submissionSubjectDao SubmissionSubjectDAO */
         $submissionKeywordDao = DAORegistry::getDAO('SubmissionKeywordDAO'); /* @var $submissionKeywordDao SubmissionKeywordDAO */
-        $submissionSubjectEntryDao = DAORegistry::getDAO('SubmissionSubjectEntryDAO'); /* @var $submissionSubjectEntryDao SubmissionSubjectEntryDAO */
 
         // insert and correct old keywords migration:
         // get old keywords
@@ -672,7 +693,8 @@ class Upgrade extends Installer
             $collector = Repo::submission()->getCollector()->filterByContextIds([$context->getId()]);
             $submissionIds = Repo::submission()->getIds($collector);
             foreach ($submissionIds as $submissionId) {
-                $submissionDir = Services::get('submissionFile')->getSubmissionDir($context->getId(), $submissionId);
+                $submissionDir = Repo::submissionFiles()
+                    ->getSubmissionDir($context->getId(), $submissionId);
                 $fileManager = new FileManager();
                 $rows = DB::table('submission_files')
                     ->where('submission_id', '=', $submissionId)
@@ -752,7 +774,8 @@ class Upgrade extends Installer
                 $newServerName = $row->submission_id . '-' . $genre->getId() . '-' . $row->file_id . '-' . $row->revision . '-' . SubmissionFile::SUBMISSION_FILE_DEPENDENT . '-' . $timestamp . '.' . strtolower_codesafe($extension);
                 // Get the old file path (after the 3.0.x migration, i.e. from OJS 2.4.x)
                 // and the correct file path
-                $submissionDir = Services::get('submissionFile')->getSubmissionDir($journal->getId(), $row->submission_id);
+                $submissionDir = Repo::submissionFiles()
+                    ->getSubmissionDir($journal->getId(), $row->submission_id);
                 $sourceFilename = $submissionDir . '/public' . '/' . $wrongServerName;
                 $targetFilename = $submissionDir . '/submission/proof' . '/' . $newServerName;
                 if (!Services::get('file')->fs->rename($sourceFilename, $targetFilename)) {
@@ -770,7 +793,6 @@ class Upgrade extends Installer
      */
     public function repairSuppFilesFilestage()
     {
-        $submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
         $fileManager = new FileManager();
 
         $rows = DB::table('submission_supplementary_files as ssf')
@@ -782,7 +804,8 @@ class Upgrade extends Installer
             ->get();
 
         foreach ($rows as $row) {
-            $submissionDir = Services::get('submissionFile')->getSubmissionDir($row->context_id, $row->submission_id);
+            $submissionDir = Repo::submissionFiles()
+                ->getSubmissionDir($row->context_id, $row->submission_id);
             $generatedOldFilename = sprintf(
                 '%d-%s-%d-%d-%d-%s.%s',
                 $row->submission_id,
@@ -1081,14 +1104,13 @@ class Upgrade extends Installer
     */
     public function updateSuppFileMetrics()
     {
-        $submissionFileDao = DAORegistry::getDAO('SubmissionFileDAO'); /* @var $submissionFileDao SubmissionFileDAO */
         $metricsDao = DAORegistry::getDAO('MetricsDAO'); /* @var $metricsDao MetricsDAO */
         // Copy 531 assoc_type data to temp table
         $metricsDao->update(
             'CREATE TABLE metrics_supp AS (SELECT * FROM metrics WHERE assoc_type = 531)'
         );
         // Fetch submission_file data with old-supp-id
-        $result = $submissionFileDao->retrieve(
+        $result = DB::statement(
             'SELECT * FROM submission_file_settings WHERE setting_name =  ?',
             ['old-supp-id']
         );
